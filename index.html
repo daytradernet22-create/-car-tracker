@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Авто Без Границ — калькулятор и поиск</title>
+<style>
+  :root{
+    --ink:#1a1a18;
+    --muted:#6b6a64;
+    --hint:#9a988f;
+    --line:#e4e1d8;
+    --line2:#d0cdc3;
+    --surface:#f4f1ea;
+    --card:#ffffff;
+    --accent:#1d5e4a;
+    --accent-soft:#e1efe9;
+    --accent-ink:#0e3a2d;
+    --amber-soft:#fbf0dd;
+    --amber-ink:#7a4d09;
+    --red-soft:#fdecea;
+    --red-ink:#8b1a10;
+    --blue-soft:#e8f0fd;
+    --blue-ink:#1a3a7a;
+    --radius:14px;
+    --radius-sm:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--surface);color:var(--ink);line-height:1.5;
+    -webkit-font-smoothing:antialiased;padding:32px 16px 64px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+  header{margin-bottom:20px;}
+  .eyebrow{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 8px;}
+  h1{font-size:26px;font-weight:600;margin:0 0 6px;letter-spacing:-.01em;}
+  .sub{font-size:15px;color:var(--muted);margin:0;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:22px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:5px;}
+  .tab{
+    flex:1;height:44px;font-size:15px;font-family:inherit;font-weight:500;cursor:pointer;
+    background:transparent;color:var(--muted);border:none;border-radius:8px;transition:all .12s;
+  }
+  .tab:hover{color:var(--ink);}
+  .tab.active{background:var(--accent);color:#fff;}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:20px;}
+
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:7px;font-weight:500;}
+  input[type=number],input[type=text],select{
+    width:100%;height:44px;padding:0 12px;font-size:16px;font-family:inherit;color:var(--ink);
+    background:var(--card);border:1px solid var(--line2);border-radius:var(--radius-sm);outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%236b6a64' stroke-width='1.5' fill='none'/></svg>");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+  input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .field{margin-bottom:18px;}
+
+  .seg{display:flex;gap:8px;}
+  .seg button{
+    flex:1;height:46px;font-size:15px;font-family:inherit;font-weight:500;cursor:pointer;
+    background:var(--card);color:var(--ink);
+    border:1px solid var(--line2);border-radius:var(--radius-sm);transition:all .12s;
+  }
+  .seg button:hover{border-color:var(--accent);}
+  .seg button.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  .customs{margin-bottom:4px;}
+  .customs-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;}
+  .customs-row:last-child{margin-bottom:0;}
+  .customs-field{flex:1;}
+  .customs-field label{margin-bottom:7px;}
+  .calc-link{
+    display:inline-flex;align-items:center;height:44px;padding:0 16px;flex:none;
+    font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap;cursor:pointer;
+    background:var(--accent-soft);color:var(--accent-ink);
+    border:1px solid transparent;border-radius:var(--radius-sm);transition:filter .12s;
+  }
+  .calc-link:hover{filter:brightness(.97);}
+
+  .results{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px;}
+  @media(max-width:520px){.results{grid-template-columns:1fr;}}
+  .result{background:var(--surface);border-radius:var(--radius-sm);padding:16px 18px;}
+  .result .flag{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.03em;text-transform:uppercase;margin:0 0 8px;}
+  .result .big{font-size:28px;font-weight:600;letter-spacing:-.01em;}
+  .result .steps{font-size:12px;color:var(--hint);margin-top:8px;line-height:1.7;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
+  @media(max-width:560px){.grid{grid-template-columns:1fr;}}
+  .pair{display:flex;gap:8px;}
+  .pair input{flex:1;}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+  .btn-primary{
+    flex:1;min-width:200px;height:48px;font-size:15px;font-weight:500;cursor:pointer;
+    background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:var(--radius-sm);transition:filter .12s;
+  }
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-primary:disabled{opacity:.7;cursor:default;}
+  .btn-ghost{
+    height:48px;padding:0 18px;font-size:14px;font-weight:500;cursor:pointer;
+    background:var(--card);color:var(--ink);border:1px solid var(--line2);border-radius:var(--radius-sm);transition:border-color .12s;
+  }
+  .btn-ghost:hover{border-color:var(--accent);}
+
+  .sites-title{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.03em;text-transform:uppercase;margin:0 0 12px;}
+  .sites{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:560px){.sites{grid-template-columns:1fr;}}
+  .site-link{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:12px 14px;text-decoration:none;cursor:pointer;
+    background:var(--surface);border:1px solid transparent;border-radius:var(--radius-sm);
+    transition:border-color .12s, background .12s;
+  }
+  .site-link:hover{border-color:var(--accent);background:var(--accent-soft);}
+  .site-name{font-size:15px;font-weight:500;color:var(--ink);}
+  .site-arrow{font-size:14px;color:var(--accent);flex:none;}
+  .site-tag{font-size:11px;color:var(--amber-ink);background:var(--amber-soft);padding:2px 8px;border-radius:6px;white-space:nowrap;}
+
+  .note{font-size:12.5px;color:var(--muted);margin:14px 2px 0;line-height:1.6;}
+  .legend{font-size:12px;color:var(--hint);margin:10px 2px 0;display:flex;align-items:center;gap:8px;}
+  .legend .site-tag{font-size:11px;}
+  footer{text-align:center;font-size:12px;color:var(--hint);margin-top:24px;}
+
+  /* Advanced Search */
+  .adv-toggle{display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;width:fit-content;background:none;border:none;font-family:inherit;font-size:14px;font-weight:500;color:var(--accent-ink);padding:0;}
+  .adv-toggle svg{transition:transform .2s;}
+  .adv-toggle.open svg{transform:rotate(180deg);}
+  .adv-panel{display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--line);}
+  .adv-panel.open{display:block;}
+  .equip-group{display:flex;gap:8px;margin-bottom:16px;}
+  .equip-btn{flex:1;height:44px;font-size:14px;font-weight:500;cursor:pointer;border-radius:var(--radius-sm);border:1.5px solid var(--line2);background:var(--card);color:var(--muted);transition:all .12s;font-family:inherit;}
+  .equip-btn:hover{border-color:var(--accent);color:var(--ink);}
+  .equip-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .adv-search-btn{width:100%;height:48px;font-size:15px;font-weight:600;cursor:pointer;background:var(--accent-ink);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;transition:filter .12s;margin-top:4px;}
+  .adv-search-btn:hover{filter:brightness(1.12);}
+  .adv-search-btn:disabled{opacity:.6;cursor:default;}
+
+  /* Results panel */
+  .adv-results{margin-top:20px;}
+  .adv-results-header{font-size:13px;color:var(--muted);margin-bottom:12px;}
+  .adv-trims{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+  .adv-trim-tag{font-size:12px;font-weight:600;background:var(--accent-soft);color:var(--accent-ink);border-radius:20px;padding:4px 12px;}
+  .adv-links{display:flex;flex-direction:column;gap:8px;}
+  .adv-link-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px 16px;text-decoration:none;color:inherit;transition:border-color .12s,box-shadow .12s;display:block;}
+  .adv-link-card:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(29,94,74,.1);}
+  .adv-link-domain{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;}
+  .adv-link-url{font-size:13px;color:var(--ink);word-break:break-all;line-height:1.4;}
+  .adv-status{font-size:13px;color:var(--muted);margin-top:10px;min-height:18px;}
+  .adv-step{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding:6px 0;}
+  .adv-step .spinner{width:12px;height:12px;border-width:1.5px;}
+  .adv-step.done{color:var(--accent);}
+  .adv-step.done::before{content:"✓ ";}
+
+  /* Watchlist tab breaks out of the .wrap constraint */
+  .wrap:has(.panel-watchlist.active){max-width:100%;padding:0 16px;}
+  .wrap.wrap-wide{max-width:100% !important;padding:0 16px !important;}
+
+  /* ===== WATCHLIST TAB ===== */
+  .wl-add-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:0;}
+  .wl-add-row input[type=text]{flex:1;font-size:14px;}
+  .wl-add-btn{
+    height:44px;padding:0 20px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;
+    background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);transition:filter .12s;flex:none;
+  }
+  .wl-add-btn:hover{filter:brightness(1.08);}
+  .wl-add-btn:disabled{opacity:.6;cursor:default;}
+  .wl-add-status{font-size:13px;color:var(--muted);margin-top:8px;min-height:18px;}
+  .wl-add-status.err{color:#c0392b;}
+
+  /* Filters bar */
+  .wl-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center;}
+  .wl-filter-input{
+    height:36px;padding:0 10px;font-size:13px;font-family:inherit;color:var(--ink);
+    background:var(--card);border:1px solid var(--line2);border-radius:8px;outline:none;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  .wl-filter-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .wl-filter-select{
+    height:36px;padding:0 28px 0 10px;font-size:13px;font-family:inherit;color:var(--ink);
+    background:var(--card);border:1px solid var(--line2);border-radius:8px;outline:none;
+    appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%236b6a64' stroke-width='1.5' fill='none'/></svg>");
+    background-repeat:no-repeat;background-position:right 10px center;
+    transition:border-color .15s;cursor:pointer;
+  }
+  .wl-filter-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .wl-filter-label{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;}
+  .wl-filter-clear{
+    height:36px;padding:0 12px;font-size:12px;font-weight:500;cursor:pointer;
+    background:transparent;color:var(--hint);border:1px solid var(--line);border-radius:8px;
+    transition:all .12s;white-space:nowrap;
+  }
+  .wl-filter-clear:hover{color:var(--ink);border-color:var(--line2);}
+
+  /* Table */
+  .wl-table-wrap{width:100%;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);overflow-x:hidden;}
+  table.wl-table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed;}
+  table.wl-table th{
+    background:var(--surface);color:var(--muted);font-size:12px;font-weight:700;
+    letter-spacing:.04em;text-transform:uppercase;padding:12px 14px;
+    border-bottom:1px solid var(--line);white-space:normal;word-break:break-word;cursor:pointer;user-select:none;
+    position:sticky;top:0;z-index:1;
+  }
+  table.wl-table th:hover{color:var(--ink);}
+  table.wl-table th .sort-arrow{margin-left:4px;opacity:.4;font-size:10px;}
+  table.wl-table th.sorted .sort-arrow{opacity:1;color:var(--accent);}
+  table.wl-table td{padding:0;border-bottom:1px solid var(--line);vertical-align:middle;}
+  table.wl-table tr:last-child td{border-bottom:none;}
+  table.wl-table tr:hover td{background:#f9f8f5;}
+
+  /* Cell inner */
+  .td-inner{padding:12px 10px;vertical-align:middle;word-break:break-word;}
+
+  /* Photo strip */
+  .photo-strip{display:flex;gap:4px;padding:8px 8px;flex-wrap:nowrap;}
+  .photo-strip img{width:56px;height:56px;object-fit:cover;border-radius:6px;background:var(--surface);cursor:pointer;transition:transform .12s,box-shadow .12s;flex-shrink:0;}
+  .photo-strip img:hover{transform:scale(1.06);box-shadow:0 3px 12px rgba(0,0,0,.2);}
+  .photo-placeholder{width:56px;height:56px;border-radius:6px;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .photo-add-btn{width:56px;height:56px;border-radius:6px;border:1.5px dashed var(--line2);background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--hint);font-size:10px;font-family:inherit;font-weight:500;transition:border-color .12s,color .12s;flex-shrink:0;}
+  .photo-add-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .photo-more{width:56px;height:56px;border-radius:6px;background:var(--accent-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent-ink);flex-shrink:0;transition:background .12s;}
+  .photo-more:hover{background:#c8e5d8;}
+
+  /* Lightbox */
+  .lb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center;flex-direction:column;}
+  .lb-overlay.open{display:flex;}
+  .lb-main{position:relative;max-width:90vw;max-height:80vh;}
+  .lb-main img{max-width:90vw;max-height:80vh;object-fit:contain;border-radius:8px;display:block;}
+  .lb-close{position:absolute;top:-18px;right:-18px;width:36px;height:36px;border-radius:50%;background:#fff;border:none;cursor:pointer;font-size:18px;font-weight:700;color:#333;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+  .lb-close:hover{background:#eee;}
+  .lb-nav{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center;}
+  .lb-thumb{width:72px;height:54px;object-fit:cover;border-radius:5px;cursor:pointer;opacity:.6;border:2px solid transparent;transition:opacity .12s,border-color .12s;}
+  .lb-thumb.active{opacity:1;border-color:#fff;}
+  .lb-thumb:hover{opacity:.85;}
+  .lb-arrow{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;font-size:20px;color:#fff;display:flex;align-items:center;justify-content:center;transition:background .12s;}
+  .lb-arrow:hover{background:rgba(255,255,255,.3);}
+  .lb-arrow-l{left:-52px;}
+  .lb-arrow-r{right:-52px;}
+
+  /* Link cell */
+  .car-link{color:var(--accent-ink);font-weight:500;text-decoration:none;font-size:12px;word-break:break-all;}
+  .car-link:hover{text-decoration:underline;}
+  .car-make-model{font-weight:600;font-size:14px;white-space:normal;}
+  .car-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+  /* Price cells */
+  .price-netto{font-weight:700;font-size:14px;color:var(--accent-ink);white-space:normal;}
+  .price-brutto{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;}
+
+  /* Status dropdown */
+  .status-sel{
+    height:32px;padding:0 26px 0 10px;font-size:13px;font-family:inherit;font-weight:600;
+    width:140px;min-width:140px;
+    border:none;border-radius:6px;outline:none;cursor:pointer;
+    appearance:none;background-repeat:no-repeat;background-position:right 8px center;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='currentColor' stroke-width='1.5' fill='none'/></svg>");
+  }
+  .status-sel.s0{background-color:var(--blue-soft);color:var(--blue-ink);}
+  .status-sel.s1{background-color:var(--amber-soft);color:var(--amber-ink);}
+  .status-sel.s2{background-color:var(--accent-soft);color:var(--accent-ink);}
+
+  /* Delete btn */
+  .del-btn{
+    width:30px;height:30px;border-radius:6px;border:1px solid var(--line);background:var(--card);
+    cursor:pointer;font-size:16px;font-weight:700;color:var(--hint);
+    display:flex;align-items:center;justify-content:center;
+    transition:all .12s;
+  }
+  .del-btn:hover{background:var(--red-soft);color:var(--red-ink);border-color:var(--red-ink);}
+
+  .wl-empty{padding:40px 20px;text-align:center;color:var(--hint);font-size:14px;}
+  .wl-count{font-size:12px;color:var(--hint);margin-bottom:10px;}
+
+  /* Loading spinner */
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ── Custom Modal ── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal-box{background:var(--card);border-radius:var(--radius);padding:28px 28px 22px;width:380px;max-width:90vw;box-shadow:0 8px 40px rgba(0,0,0,.18);animation:modalIn .15s ease;}
+  @keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+  .modal-title{font-size:17px;font-weight:600;margin:0 0 10px;color:var(--ink);}
+  .modal-text{font-size:14px;color:var(--muted);margin:0 0 20px;line-height:1.5;}
+  .modal-input{width:100%;height:44px;padding:0 12px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line2);border-radius:var(--radius-sm);outline:none;margin-bottom:18px;transition:border-color .15s,box-shadow .15s;}
+  .modal-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .modal-btns{display:flex;gap:10px;justify-content:flex-end;}
+  .modal-btn{height:40px;padding:0 20px;font-size:14px;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;border:none;font-family:inherit;transition:filter .12s;}
+  .modal-btn-cancel{background:var(--surface);color:var(--muted);border:1px solid var(--line2)!important;border:none;}
+  .modal-btn-cancel:hover{background:var(--line);}
+  .modal-btn-ok{background:var(--accent);color:#fff;}
+  .modal-btn-ok:hover{filter:brightness(1.08);}
+  .modal-btn-danger{background:var(--red-soft);color:var(--red-ink);}
+  .modal-btn-danger:hover{background:#f5c6c3;}
+
+  /* ── Checkboxes ── */
+  .wl-cb{width:18px;height:18px;cursor:pointer;accent-color:var(--accent);flex-shrink:0;}
+  .td-cb{padding:0 8px 0 14px;vertical-align:middle;}
+
+  /* ── Screenshot btn bar ── */
+  .wl-screenshot-btn{height:38px;padding:0 16px;font-size:13px;font-weight:600;cursor:pointer;background:var(--accent-soft);color:var(--accent-ink);border:1px solid transparent;border-radius:var(--radius-sm);font-family:inherit;transition:background .12s;display:flex;align-items:center;gap:7px;}
+  .wl-screenshot-btn:hover{background:#c8e5d8;}
+  .wl-screenshot-btn:disabled{opacity:.5;cursor:default;}
+  .wl-select-count{font-size:13px;color:var(--muted);}
+
+  /* ── Photo strip overrides ── */
+  .photo-strip{display:flex;gap:4px;padding:6px 8px;align-items:center;}
+  .photo-strip img{width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0;transition:transform .12s,box-shadow .12s;}
+  .photo-strip img:hover{transform:scale(1.06);box-shadow:0 3px 10px rgba(0,0,0,.2);}
+  .photo-placeholder{width:60px;height:60px;border-radius:6px;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .photo-add-btn{width:60px;height:60px;border-radius:6px;border:1.5px dashed var(--line2);background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--hint);font-size:10px;font-family:inherit;font-weight:500;transition:border-color .12s,color .12s;flex-shrink:0;}
+  .photo-add-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .photo-more{width:60px;height:60px;border-radius:6px;background:var(--accent-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--accent-ink);flex-shrink:0;transition:background .12s;}
+  .photo-more:hover{background:#c8e5d8;}
+
+  /* ── Lightbox add-photo area ── */
+  .lb-add-area{display:flex;gap:8px;margin-top:12px;align-items:center;}
+  .lb-add-input{flex:1;height:36px;padding:0 10px;font-size:13px;font-family:inherit;color:var(--ink);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;outline:none;color:#fff;}
+  .lb-add-input::placeholder{color:rgba(255,255,255,.45);}
+  .lb-add-input:focus{border-color:rgba(255,255,255,.6);}
+  .lb-add-submit{height:36px;padding:0 14px;font-size:13px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;white-space:nowrap;}
+  .lb-add-submit:hover{filter:brightness(1.1);}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PASSWORD GATE — change PASS_HASH below to your own password hash
+     To generate a new hash: https://emn178.github.io/online-tools/sha256.html
+     Current password: avto2024
+     ═══════════════════════════════════════════════════════════════ -->
+<style>
+  #gate{
+    position:fixed;inset:0;z-index:99999;
+    background:var(--surface);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .gate-box{
+    background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);padding:40px 36px 32px;
+    width:340px;max-width:90vw;
+    box-shadow:0 8px 40px rgba(0,0,0,.10);
+    text-align:center;
+  }
+  .gate-logo{
+    font-size:13px;font-weight:700;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:8px;
+  }
+  .gate-title{
+    font-size:22px;font-weight:600;color:var(--ink);
+    margin:0 0 6px;letter-spacing:-.01em;
+  }
+  .gate-sub{
+    font-size:14px;color:var(--muted);margin:0 0 28px;
+  }
+  .gate-input{
+    width:100%;height:48px;padding:0 14px;
+    font-size:16px;font-family:inherit;color:var(--ink);
+    background:var(--surface);
+    border:1.5px solid var(--line2);border-radius:var(--radius-sm);
+    outline:none;text-align:center;letter-spacing:.08em;
+    transition:border-color .15s,box-shadow .15s;
+    margin-bottom:14px;
+  }
+  .gate-input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  .gate-input.shake{
+    animation:shake .35s ease;border-color:#e74c3c;
+    box-shadow:0 0 0 3px rgba(231,76,60,.15);
+  }
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-6px)}
+    40%{transform:translateX(6px)}
+    60%{transform:translateX(-4px)}
+    80%{transform:translateX(4px)}
+  }
+  .gate-btn{
+    width:100%;height:48px;font-size:15px;font-weight:600;
+    cursor:pointer;font-family:inherit;
+    background:var(--accent);color:#fff;
+    border:none;border-radius:var(--radius-sm);
+    transition:filter .12s;
+  }
+  .gate-btn:hover{filter:brightness(1.08);}
+  .gate-err{
+    font-size:13px;color:#e74c3c;margin-top:12px;
+    min-height:18px;opacity:0;transition:opacity .2s;
+  }
+  .gate-err.show{opacity:1;}
+  .gate-hint{font-size:12px;color:var(--hint);margin-top:20px;}
+</style>
+
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">Авто Без Границ</div>
+    <h2 class="gate-title">Вход</h2>
+    <p class="gate-sub">Введите пароль для доступа</p>
+    <input class="gate-input" id="gateInput" type="password"
+           placeholder="••••••••" autocomplete="current-password" />
+    <button class="gate-btn" id="gateBtn">Войти</button>
+    <div class="gate-err" id="gateErr">Неверный пароль</div>
+    <div class="gate-hint">Сессия сохраняется до закрытия вкладки</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // SHA-256 hash of the password — change this to your own hash
+  // Current password: avto2024
+  // Generate new hash at: https://emn178.github.io/online-tools/sha256.html
+  var PASS_HASH = 'cd758485efc5898d574f339e6d8a42cde7d2f7b4ae25ac63ea26d846c10b00cc';
+  var SESSION_KEY = 'avb_auth';
+
+  var gate  = document.getElementById('gate');
+  var inp   = document.getElementById('gateInput');
+  var btn   = document.getElementById('gateBtn');
+  var err   = document.getElementById('gateErr');
+
+  // Already authenticated this session?
+  if (sessionStorage.getItem(SESSION_KEY) === PASS_HASH) {
+    gate.style.display = 'none';
+    return;
+  }
+
+  // SHA-256 using Web Crypto API
+  async function sha256(str) {
+    var buf = await crypto.subtle.digest('SHA-256',
+      new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf))
+      .map(function(b){ return b.toString(16).padStart(2,'0'); })
+      .join('');
+  }
+
+  async function tryLogin() {
+    var hash = await sha256(inp.value);
+    if (hash === PASS_HASH) {
+      sessionStorage.setItem(SESSION_KEY, PASS_HASH);
+      gate.style.display = 'none';
+    } else {
+      inp.classList.remove('shake');
+      void inp.offsetWidth; // reflow to restart animation
+      inp.classList.add('shake');
+      err.classList.add('show');
+      inp.value = '';
+      setTimeout(function(){ inp.classList.remove('shake'); }, 400);
+    }
+  }
+
+  btn.addEventListener('click', tryLogin);
+  inp.addEventListener('keydown', function(e){ if(e.key==='Enter') tryLogin(); });
+  inp.focus();
+})();
+</script>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Авто Без Границ</p>
+    <h1>Калькулятор и поиск авто</h1>
+    <p class="sub">Расчёт стоимости, поиск и список кандидатов — в одном месте.</p>
+  </header>
+
+  <div class="tabs">
+    <button type="button" class="tab active" data-tab="calc">Калькулятор</button>
+    <button type="button" class="tab" data-tab="search">Поиск авто</button>
+    <button type="button" class="tab" data-tab="watchlist">Список авто</button>
+  </div>
+
+  <!-- ===== CALCULATOR PANEL ===== -->
+  <div class="panel active" id="panel-calc">
+    <div class="card">
+      <div class="field">
+        <label for="carPrice">Цена авто в Европе (EUR)</label>
+        <input type="number" id="carPrice" min="0" step="100" placeholder="например, 10000" inputmode="decimal" />
+      </div>
+      <div class="field">
+        <label>Объём двигателя</label>
+        <div class="seg">
+          <button type="button" id="btnUnder" data-v="under">До 1,9 л</button>
+          <button type="button" id="btnOver" data-v="over">Свыше 1,9 л</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="rate">Курс (1 EUR = ? RUB) <span id="rateStatus" style="font-weight:400;font-size:11px;color:var(--hint);"></span></label>
+        <input type="number" id="rate" min="0" step="0.01" value="84.4" inputmode="decimal" />
+      </div>
+      <div class="customs">
+        <div class="customs-row">
+          <div class="customs-field">
+            <label for="belCustoms">Таможня Беларусь (EUR)</label>
+            <input type="number" id="belCustoms" min="0" step="1" value="0" inputmode="decimal" />
+          </div>
+          <a class="calc-link" href="https://autogood.by/tools/customs-calculator#scroll_calc_rezult" target="_blank" rel="noopener">Рассчитать&nbsp;→</a>
+        </div>
+        <div class="customs-row">
+          <div class="customs-field">
+            <label for="rusCustoms">Таможня Россия (RUB)</label>
+            <input type="number" id="rusCustoms" min="0" step="1" value="0" inputmode="decimal" />
+          </div>
+          <a class="calc-link" href="https://www.drom.ru/world/calculator/" target="_blank" rel="noopener">Рассчитать&nbsp;→</a>
+        </div>
+      </div>
+      <div class="results">
+        <div class="result">
+          <p class="flag">Беларусь — итого</p>
+          <div class="big" id="belOut">€0</div>
+          <div class="steps" id="belSteps"></div>
+        </div>
+        <div class="result">
+          <p class="flag">Россия — итого</p>
+          <div class="big" id="rusOut">₽0</div>
+          <div class="steps" id="rusSteps"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><strong>Беларусь:</strong> цена +4%, затем +2%, затем +€2&nbsp;000 (до 1,9&nbsp;л) или +€5&nbsp;000 (свыше). Результат в EUR.<br>
+    <strong>Россия:</strong> цена +4%, затем +3%, затем +€2&nbsp;300 (до 1,9&nbsp;л) или +€5&nbsp;000 (свыше), с пересчётом в RUB.</p>
+    <p class="note">Нажмите «Рассчитать», чтобы открыть таможенный калькулятор страны в новой вкладке, затем впишите полученную сумму в поле — она добавится к итогу. Курс вводится вручную.</p>
+  </div>
+
+  <!-- ===== SEARCH PANEL ===== -->
+  <div class="panel" id="panel-search">
+    <div class="card">
+      <div class="grid">
+        <div>
+          <label for="make">Марка</label>
+          <input type="text" id="make" list="makeList" placeholder="введите марку" autocomplete="off" />
+          <datalist id="makeList"></datalist>
+        </div>
+        <div>
+          <label for="model">Модель</label>
+          <input type="text" id="model" list="modelList" placeholder="выберите марку или введите" autocomplete="off" />
+          <datalist id="modelList"></datalist>
+        </div>
+        <div>
+          <label>Год выпуска</label>
+          <div class="pair">
+            <input type="number" id="yearFrom" placeholder="от" min="1990" max="2030" />
+            <input type="number" id="yearTo" placeholder="до" min="1990" max="2030" />
+          </div>
+        </div>
+        <div>
+          <label>Цена, EUR</label>
+          <div class="pair">
+            <input type="number" id="priceFrom" placeholder="от" min="0" step="100" />
+            <input type="number" id="priceTo" placeholder="до" min="0" step="100" />
+          </div>
+        </div>
+        <div>
+          <label for="mileageTo">Пробег до, км</label>
+          <input type="number" id="mileageTo" placeholder="например, 150000" min="0" step="1000" />
+        </div>
+        <div>
+          <label>Объём двигателя, см³</label>
+          <div class="pair">
+            <input type="number" id="ccFrom" placeholder="от" min="0" step="100" />
+            <input type="number" id="ccTo" placeholder="до" min="0" step="100" />
+          </div>
+        </div>
+        <div>
+          <label>Мощность, л.с. (HP)</label>
+          <div class="pair">
+            <input type="number" id="hpFrom" placeholder="от" min="0" step="10" />
+            <input type="number" id="hpTo" placeholder="до" min="0" step="10" />
+          </div>
+        </div>
+        <div>
+          <label for="fuel">Топливо</label>
+          <select id="fuel">
+            <option value="">— любое —</option>
+            <option value="petrol">Бензин</option>
+            <option value="diesel">Дизель</option>
+          </select>
+        </div>
+        <div>
+          <label for="trans">Коробка передач</label>
+          <select id="trans">
+            <option value="">— любая —</option>
+            <option value="automatic">Автомат</option>
+            <option value="manual">Механика</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn-primary" id="openAll">Открыть все сайты</button>
+        <button type="button" class="btn-ghost" id="clearBtn">Очистить</button>
+      </div>
+      <p class="note" id="popupNote" style="display:none;color:var(--amber-ink);">Часть вкладок всё ещё блокируется браузером. Нажмите значок блокировки всплывающих окон в адресной строке и выберите «Всегда разрешать», либо открывайте сайты по одному из списка ниже.</p>
+
+      <!-- Advanced Search -->
+      <button class="adv-toggle" id="advToggle" type="button">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Расширенный поиск с AI
+      </button>
+      <div class="adv-panel" id="advPanel">
+        <label style="font-size:13px;color:var(--muted);font-weight:500;display:block;margin-bottom:8px;">Уровень комплектации</label>
+        <div class="equip-group">
+          <button class="equip-btn" data-eq="basic" type="button">Базовая</button>
+          <button class="equip-btn" data-eq="good" type="button">Хорошая</button>
+          <button class="equip-btn" data-eq="top" type="button">Топ</button>
+        </div>
+        <label style="font-size:13px;color:var(--muted);font-weight:500;display:block;margin-bottom:8px;">Дополнительные пожелания (необязательно)</label>
+        <input type="text" id="advExtra" placeholder="напр. панорамная крыша, кожаный салон…" style="margin-bottom:12px;" />
+        <button class="adv-search-btn" id="advSearchBtn" type="button">
+          <span id="advSearchLabel">🔍 Найти по комплектации</span>
+        </button>
+        <div id="advSteps"></div>
+      </div>
+    </div>
+
+    <!-- Advanced Search Results -->
+    <div class="adv-results" id="advResults" style="display:none;">
+      <div class="adv-results-header" id="advResultsHeader"></div>
+      <div class="adv-trims" id="advTrims"></div>
+      <div class="adv-links" id="advLinks"></div>
+    </div>
+    <div class="card">
+      <p class="sites-title">Сайты по отдельности</p>
+      <div class="sites" id="sitesList"></div>
+      <div class="legend" style="color:var(--accent);font-size:12px;">✓ Все сайты теперь заполняют марку, модель и все фильтры автоматически</div>
+    </div>
+    <p class="note">Параметры подставляются в каждый сайт настолько, насколько он это позволяет. На некоторых сайтах марка и модель кодируются внутренними номерами — там подставляются фильтры (год, пробег, цена, топливо), а марку вы выбираете на самом сайте в один клик.</p>
+  </div>
+
+  <!-- ===== WATCHLIST PANEL ===== -->
+  <div class="panel panel-watchlist" id="panel-watchlist">
+
+    <!-- Add car -->
+    <div class="card">
+      <label for="wlUrlInput">Ссылка на объявление</label>
+      <div class="wl-add-row">
+        <input type="text" id="wlUrlInput" placeholder="https://www.mobile.de/... или autoscout24.com/... или carvago.com/..." autocomplete="off" />
+        <button class="wl-add-btn" id="wlAddBtn">Добавить авто</button>
+      </div>
+      <div style="margin-top:10px;">
+        <button class="wl-screenshot-btn" id="screenshotBtn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 3l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          Добавить из скриншота
+        </button>
+        <span class="wl-select-count" id="selectCount" style="margin-left:10px;"></span>
+      </div>
+      <div class="wl-add-status" id="wlAddStatus"></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="wl-filters" id="wlFilters">
+      <input class="wl-filter-input" id="fSearch" placeholder="🔍  Поиск по марке или модели…" style="width:260px;font-size:14px;" />
+    </div>
+    <div class="wl-count" id="wlCount"></div>
+
+    <!-- Table -->
+    <div class="wl-table-wrap">
+      <table class="wl-table" id="wlTable">
+        <thead>
+          <tr>
+            <th style="width:36px;"></th>
+            <th style="width:150px;">Фото</th>
+            <th data-col="make" style="width:140px;">Марка / Модель <span class="sort-arrow">↕</span></th>
+            <th data-col="mileage" style="width:90px;">Пробег <span class="sort-arrow">↕</span></th>
+            <th data-col="hp" style="width:70px;">л.с. <span class="sort-arrow">↕</span></th>
+            <th data-col="reg" style="width:90px;">Регистр. <span class="sort-arrow">↕</span></th>
+            <th data-col="vin" style="width:120px;">VIN</th>
+            <th data-col="fuel" style="width:80px;">Топливо</th>
+            <th data-col="cc" style="width:85px;">Объём см³ <span class="sort-arrow">↕</span></th>
+            <th data-col="priceNetto" style="width:100px;">Нетто € <span class="sort-arrow">↕</span></th>
+            <th data-col="priceBrutto" style="width:100px;">Брутто € <span class="sort-arrow">↕</span></th>
+            <th data-col="location" style="width:200px;">Локация</th>
+            <th data-col="seller" style="width:180px;">Продавец</th>
+            <th data-col="addedAt" style="width:90px;">Добавлено <span class="sort-arrow">↕</span></th>
+            <th data-col="status" style="width:155px;">Статус <span class="sort-arrow">↕</span></th>
+            <th style="width:44px;"></th>
+          </tr>
+        </thead>
+        <tbody id="wlTbody"></tbody>
+      </table>
+    </div>
+    <div class="wl-empty" id="wlEmpty" style="display:none;">
+      Список пуст. Вставьте ссылку на объявление выше — данные подтянутся автоматически.
+    </div>
+
+  </div>
+
+  <footer>Авто Без Границ · калькулятор и поиск по 8 сайтам</footer>
+</div>
+
+<!-- Lightbox — must be outside .wrap, before </body> -->
+<div class="lb-overlay" id="lbOverlay">
+  <div class="lb-main">
+    <button class="lb-close" id="lbClose">×</button>
+    <button class="lb-arrow lb-arrow-l" id="lbPrev">&#8249;</button>
+    <img id="lbImg" src="" alt="" />
+    <button class="lb-arrow lb-arrow-r" id="lbNext">&#8250;</button>
+  </div>
+  <div class="lb-nav" id="lbNav"></div>
+  <div class="lb-add-area">
+    <input class="lb-add-input" id="lbAddInput" placeholder="Вставьте URL фото и нажмите +" />
+    <button class="lb-add-submit" id="lbAddSubmit">+ Добавить</button>
+  </div>
+</div>
+
+<!-- Custom modals -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box" id="modalBox">
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-text" id="modalText"></div>
+    <input class="modal-input" id="modalInput" style="display:none;" />
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-cancel" id="modalCancel">Отмена</button>
+      <button class="modal-btn modal-btn-ok" id="modalOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  /* ===== TABS ===== */
+  var tabs = document.querySelectorAll('.tab');
+  var panels = {
+    calc: document.getElementById('panel-calc'),
+    search: document.getElementById('panel-search'),
+    watchlist: document.getElementById('panel-watchlist')
+  };
+  var wrapEl = document.querySelector('.wrap');
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){
+      tabs.forEach(function(x){ x.classList.remove('active'); });
+      t.classList.add('active');
+      Object.keys(panels).forEach(function(k){ panels[k].classList.remove('active'); });
+      panels[t.dataset.tab].classList.add('active');
+      wrapEl.classList.toggle('wrap-wide', t.dataset.tab === 'watchlist');
+    });
+  });
+
+  /* ===== CALCULATOR ===== */
+  var carPrice=document.getElementById('carPrice');
+  var rate=document.getElementById('rate');
+  var belCustoms=document.getElementById('belCustoms');
+  var rusCustoms=document.getElementById('rusCustoms');
+  var btnUnder=document.getElementById('btnUnder');
+  var btnOver=document.getElementById('btnOver');
+  var belOut=document.getElementById('belOut');
+  var rusOut=document.getElementById('rusOut');
+  var belSteps=document.getElementById('belSteps');
+  var rusSteps=document.getElementById('rusSteps');
+  var engine='under';
+  var eur=new Intl.NumberFormat('ru-RU',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+  var rub=new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0});
+  function setEngine(v){
+    engine=v;
+    btnUnder.classList.toggle('active',v==='under');
+    btnOver.classList.toggle('active',v==='over');
+    calc();
+  }
+  btnUnder.addEventListener('click',function(){setEngine('under');});
+  btnOver.addEventListener('click',function(){setEngine('over');});
+  function calc(){
+    var p=parseFloat(carPrice.value)||0;
+    var r=parseFloat(rate.value)||0;
+    var belFixed=engine==='under'?2000:5000;
+    var rusFixed=engine==='under'?2300:5000;
+    var afterFour=p*1.04;
+    var belEur=afterFour*1.02+belFixed;
+    var rusEur=afterFour*1.03+rusFixed;
+    var rusRub=rusEur*r;
+    var belCust=parseFloat(belCustoms.value)||0;
+    var rusCust=parseFloat(rusCustoms.value)||0;
+    belEur+=belCust; rusRub+=rusCust;
+    belOut.textContent=eur.format(Math.round(belEur));
+    rusOut.textContent=rub.format(Math.round(rusRub));
+    belSteps.textContent='+4% → '+eur.format(Math.round(afterFour))+' · +2% · +'+eur.format(belFixed)+(belCust?' · +таможня '+eur.format(belCust):'');
+    rusSteps.textContent='= '+eur.format(Math.round(rusEur))+' × '+(r?r.toFixed(2):'0')+' RUB'+(rusCust?' + таможня '+rub.format(rusCust):'');
+  }
+  carPrice.addEventListener('input',calc); rate.addEventListener('input',calc);
+  belCustoms.addEventListener('input',calc); rusCustoms.addEventListener('input',calc);
+  setEngine('under');
+
+  // ── Auto-fetch EUR/RUB rate from StatusBank via server ────────────
+  var rateStatus = document.getElementById('rateStatus');
+  var rateInp    = document.getElementById('rate');
+
+  async function fetchRate() {
+    rateStatus.textContent = '↻ обновляю…';
+    try {
+      var resp = await fetch(SERVER + '/rate');
+      var json = await resp.json();
+      if (json.rate) {
+        rateInp.value = json.rate.toFixed(4);
+        calc();
+        var now = new Date();
+        rateStatus.textContent = '✓ СтатусБанк ' + now.toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+        rateStatus.style.color = 'var(--accent)';
+      } else {
+        rateStatus.textContent = '⚠ не найден';
+        rateStatus.style.color = 'var(--amber-ink)';
+      }
+    } catch(e) {
+      rateStatus.textContent = '⚠ сервер недоступен';
+      rateStatus.style.color = 'var(--hint)';
+    }
+  }
+
+  // Only fetch once per day — store last fetch time in localStorage
+  var RATE_KEY = 'avb_rate_v1';
+  function shouldRefreshRate() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(RATE_KEY) || '{}');
+      if (!saved.rate || !saved.ts) return true;
+      var age = Date.now() - saved.ts;
+      return age > 24 * 60 * 60 * 1000; // older than 24h
+    } catch(e) { return true; }
+  }
+  function saveRate(rate) {
+    localStorage.setItem(RATE_KEY, JSON.stringify({ rate: rate, ts: Date.now() }));
+  }
+  function loadSavedRate() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(RATE_KEY) || '{}');
+      return saved.rate || null;
+    } catch(e) { return null; }
+  }
+
+  async function fetchRateIfNeeded() {
+    // If we have a fresh rate saved, use it immediately
+    var saved = loadSavedRate();
+    if (saved && !shouldRefreshRate()) {
+      rateInp.value = parseFloat(saved).toFixed(4);
+      calc();
+      var savedTs = JSON.parse(localStorage.getItem(RATE_KEY)||'{}').ts;
+      var d = new Date(savedTs);
+      var dd = String(d.getDate()).padStart(2,'0');
+      var mm = String(d.getMonth()+1).padStart(2,'0');
+      var yyyy = d.getFullYear();
+      rateStatus.textContent = '✓ СтатусБанк ' + dd+'.'+mm+'.'+yyyy;
+      rateStatus.style.color = 'var(--accent)';
+      return;
+    }
+    // Otherwise fetch fresh from server
+    await fetchRate();
+  }
+
+  var _origFetchRate = fetchRate;
+  fetchRate = async function() {
+    rateStatus.textContent = '↻ обновляю…';
+    try {
+      var resp = await fetch(SERVER + '/rate');
+      var json = await resp.json();
+      if (json.rate) {
+        rateInp.value = json.rate.toFixed(4);
+        calc();
+        saveRate(json.rate);
+        var now = new Date();
+        var dd2 = String(now.getDate()).padStart(2,'0');
+        var mm2 = String(now.getMonth()+1).padStart(2,'0');
+        var yyyy2 = now.getFullYear();
+        rateStatus.textContent = '✓ СтатусБанк ' + dd2+'.'+mm2+'.'+yyyy2;
+        rateStatus.style.color = 'var(--accent)';
+      } else {
+        rateStatus.textContent = '⚠ не найден';
+        rateStatus.style.color = 'var(--amber-ink)';
+      }
+    } catch(e) {
+      // Server offline — use saved rate silently
+      var saved2 = loadSavedRate();
+      if (saved2) {
+        rateInp.value = parseFloat(saved2).toFixed(4);
+        calc();
+        rateStatus.textContent = '(сохранённый курс)';
+        rateStatus.style.color = 'var(--hint)';
+      } else {
+        rateStatus.textContent = '⚠ сервер недоступен';
+        rateStatus.style.color = 'var(--hint)';
+      }
+    }
+  };
+
+  // Fetch on calc tab click only if stale
+  document.querySelectorAll('.tab').forEach(function(t) {
+    t.addEventListener('click', function() {
+      if (t.dataset.tab === 'calc') fetchRateIfNeeded();
+    });
+  });
+
+  // On page load — use saved if fresh, else fetch
+  fetchRateIfNeeded();
+
+  /* ===== SEARCH ===== */
+  var MAKES=["Audi","BMW","Mercedes-Benz","Volkswagen","Skoda","Renault","Peugeot","Citroen","Opel","Ford","Toyota","Nissan","Honda","Mazda","Hyundai","Kia","Volvo","Land Rover","Jaguar","Porsche","Mini","Seat","Fiat","Dacia","Suzuki","Mitsubishi","Lexus","Tesla","Cupra","Alfa Romeo"];
+  var MODELS={"Audi":["A1","A3","A4","A5","A6","A7","A8","Q2","Q3","Q5","Q7","Q8","TT","e-tron"],"BMW":["1 Series","2 Series","3 Series","4 Series","5 Series","6 Series","7 Series","X1","X2","X3","X4","X5","X6","X7","Z4","i3","i4","iX"],"Mercedes-Benz":["A-Class","B-Class","C-Class","E-Class","S-Class","CLA","CLS","GLA","GLB","GLC","GLE","GLS","V-Class","EQC"],"Volkswagen":["Polo","Golf","Passat","Arteon","T-Roc","Tiguan","Touareg","Touran","Sharan","Caddy","ID.3","ID.4"],"Skoda":["Fabia","Scala","Octavia","Superb","Rapid","Kamiq","Karoq","Kodiaq","Enyaq"],"Renault":["Clio","Megane","Captur","Kadjar","Scenic","Grand Scenic","Talisman","Koleos","Arkana","Espace"],"Peugeot":["108","208","308","508","2008","3008","5008","Partner","Rifter"],"Citroen":["C1","C3","C3 Aircross","C4","C5","C5 Aircross","Berlingo","SpaceTourer"],"Opel":["Corsa","Astra","Insignia","Crossland","Grandland","Mokka","Zafira","Combo"],"Ford":["Fiesta","Focus","Mondeo","Puma","Kuga","EcoSport","Edge","Galaxy","S-Max","Mustang"],"Toyota":["Aygo","Yaris","Corolla","Camry","C-HR","RAV4","Highlander","Land Cruiser","Prius","Proace"],"Nissan":["Micra","Leaf","Juke","Qashqai","X-Trail","Navara"],"Honda":["Jazz","Civic","Accord","HR-V","CR-V"],"Mazda":["2","3","6","CX-3","CX-30","CX-5","MX-5"],"Hyundai":["i10","i20","i30","Tucson","Santa Fe","Kona","Ioniq","Bayon"],"Kia":["Picanto","Rio","Ceed","Sportage","Sorento","Niro","Stonic","XCeed","EV6"],"Volvo":["V40","V60","V90","S60","S90","XC40","XC60","XC90"],"Land Rover":["Range Rover","Range Rover Sport","Range Rover Evoque","Range Rover Velar","Discovery","Discovery Sport","Defender"],"Jaguar":["XE","XF","XJ","E-Pace","F-Pace","I-Pace","F-Type"],"Porsche":["911","718 Cayman","718 Boxster","Panamera","Macan","Cayenne","Taycan"],"Mini":["Cooper","Clubman","Countryman","Cabrio"],"Seat":["Ibiza","Leon","Arona","Ateca","Tarraco","Alhambra"],"Fiat":["500","Panda","Tipo","500X","500L","Doblo"],"Dacia":["Sandero","Logan","Duster","Spring","Jogger"],"Suzuki":["Swift","Ignis","Vitara","S-Cross","Jimny","Across"],"Mitsubishi":["Space Star","ASX","Eclipse Cross","Outlander","L200"],"Lexus":["CT","IS","ES","LS","UX","NX","RX"],"Tesla":["Model 3","Model S","Model X","Model Y"],"Cupra":["Leon","Formentor","Ateca","Born"],"Alfa Romeo":["Giulietta","Giulia","Stelvio","Tonale"]};
+  var makeSel=document.getElementById('make');
+  var makeList=document.getElementById('makeList');
+  MAKES.forEach(function(m){var o=document.createElement('option');o.value=m;makeList.appendChild(o);});
+  var modelList=document.getElementById('modelList');
+  function findMakeKey(v){v=(v||'').trim().toLowerCase();if(!v)return '';for(var i=0;i<MAKES.length;i++){if(MAKES[i].toLowerCase()===v)return MAKES[i];}return '';}
+  function fillModels(){var key=findMakeKey(makeSel.value);var list=MODELS[key]||[];modelList.innerHTML='';list.forEach(function(m){var o=document.createElement('option');o.value=m;modelList.appendChild(o);});if(arguments[0])document.getElementById('model').value='';}
+  makeSel.addEventListener('input',function(){fillModels(true);}); fillModels();
+  function val(id){var e=document.getElementById(id);return e?e.value.trim():'';}
+  function enc(s){return encodeURIComponent(s);}
+  function slug(s){return s.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');}
+  function params(){return{make:val('make'),model:val('model'),yearFrom:val('yearFrom'),yearTo:val('yearTo'),priceFrom:val('priceFrom'),priceTo:val('priceTo'),mileageTo:val('mileageTo'),ccFrom:val('ccFrom'),ccTo:val('ccTo'),hpFrom:val('hpFrom'),hpTo:val('hpTo'),fuel:val('fuel'),trans:val('trans')};}
+  function add(arr,cond,str){if(cond)arr.push(str);}
+  // ── mobile.de make/model codes ──────────────────────────────────
+  var MDE = {"mercedes-benz":{"c":"17200","m":{"a 140":"2","a 150":"3","a 160":"4","a 170":"5","a 180":"6","a 190":"7","a 200":"8","a 210":"9","a 220":"221","a 250":"220","a 35 amg":"298","a 45 amg":"229","b 150":"12","b 160":"11","b 170":"13","b 180":"14","b 200":"15","b 220":"222","b 250":"223","c 160":"16","c 180":"17","c 200":"18","c 220":"19","c 230":"20","c 240":"21","c 250":"22","c 270":"23","c 280":"24","c 300":"44","c 320":"27","c 350":"28","c 400":"245","c 43 amg":"30","c 63 amg":"198","cla 180":"225","cla 200":"226","cla 220":"227","cla 250":"228","cla 35 amg":"326","cla 45 amg":"230","cle 200":"357","cle 220":"360","cle 300":"361","cle 450":"362","cle 53 amg":"363","clk 200":"168","clk 220":"169","clk 230":"186","clk 240":"187","clk 280":"170","clk 320":"171","clk 350":"172","clk 430":"173","clk 500":"174","clk 55 amg":"45","clk 63 amg":"189","cls 220":"240","cls 250":"212","cls 300":"117","cls 350":"148","cls 400":"239","cls 450":"289","cls 500":"149","cls 53 amg":"297","cls 63 amg":"176","e 200":"47","e 220":"48","e 230":"49","e 250":"51","e 270":"53","e 280":"54","e 300":"56","e 320":"57","e 350":"58","e 400":"60","e 450":"321","e 500":"64","e 53 amg":"296","e 63 amg":"179","eqa":"346","eqb":"350","eqc":"322","eqe":"352","eqe suv":"358","eqs":"351","eqs suv":"359","eqt":"356","eqv":"344","g 300":"157","g 320":"158","g 350":"160","g 400":"159","g 500":"161","g 55 amg":"68","g 63 amg":"218","g 65 amg":"219","gla 180":"238","gla 200":"231","gla 220":"232","gla 250":"233","gla 35 amg":"343","gla 45 amg":"236","glb 180":"335","glb 200":"328","glb 220":"336","glb 250":"329","glb 35 amg":"339","glc 200":"325","glc 220":"253","glc 250":"254","glc 300":"284","glc 350":"278","glc 400":"334","glc 43 amg":"279","glc 63 amg":"283","gle 250":"266","gle 300":"324","gle 350":"251","gle 400":"252","gle 43 amg":"280","gle 450":"243","gle 500":"267","gle 53 amg":"337","gle 63 amg":"250","glk 200":"175","glk 220":"206","glk 250":"63","glk 300":"65","glk 350":"209","gls 350":"268","gls 400":"269","gls 450":"340","gls 500":"270","gls 63":"271","amg gt":"242","amg gt c":"282","amg gt r":"281","amg gt s":"247","ml 270":"72","ml 300":"67","ml 320":"74","ml 350":"75","ml 400":"76","ml 430":"77","ml 500":"78","ml 63 amg":"162","s 280":"83","s 300":"84","s 320":"85","s 350":"86","s 400":"87","s 420":"88","s 430":"89","s 450":"191","s 500":"90","s 550":"193","s 560":"285","s 580":"348","s 600":"93","s 63 amg":"194","s 65 amg":"94","sl 280":"95","sl 300":"96","sl 320":"97","sl 350":"98","sl 400":"237","sl 500":"102","sl 55 amg":"103","sl 600":"105","sl 63 amg":"199","slc 180":"274","slc 200":"275","slc 250":"273","slc 300":"276","slc 43 amg":"277","slk 200":"108","slk 230":"109","slk 250":"214","slk 300":"10","slk 320":"112","slk 350":"113","slk 55 amg":"114","v 200":"118","v 220":"119","v 230":"120","v 250":"235","v 280":"121","v 300":"323","citan":"224","viano":"124","vito":"125","sprinter":"116"}},"bmw":{"c":"3500","m":{"114":"73","116":"2","118":"3","120":"4","123":"59","125":"61","128":"328","130":"5","135":"58","216":"106","218":"90","220":"84","223":"351","225":"91","228":"104","230":"125","315":"7","316":"8","318":"9","320":"10","323":"11","324":"12","325":"13","328":"14","330":"15","335":"56","340":"118","418":"115","420":"80","425":"102","428":"81","430":"83","435":"82","440":"120","518":"16","520":"17","523":"18","524":"19","525":"20","528":"21","530":"22","535":"23","540":"24","545":"25","550":"26","628":"27","630":"28","633":"29","635":"30","640":"68","645":"31","650":"32","725":"33","728":"34","730":"35","732":"36","735":"37","740":"38","745":"39","750":"40","760":"41","840":"42","850":"43","214 active tourer":"110","216 active tourer":"111","216 gran coupe":"345","218 active tourer":"107","218 gran coupe":"343","220 active tourer":"108","220 gran coupe":"344","223 active tourer":"333","223 gran coupe":"350","225 active tourer":"109","230 active tourer":"334","318 gran turismo":"75","320 gran turismo":"76","325 gran turismo":"88","328 gran turismo":"77","330 gran turismo":"103","335 gran turismo":"78","340 gran turismo":"130","418 gran coupe":"98","420 gran coupe":"99","425 gran coupe":"124","428 gran coupe":"100","430 gran coupe":"105","435 gran coupe":"101","440 gran coupe":"121","520 gran turismo":"74","530 gran turismo":"65","535 gran turismo":"66","550 gran turismo":"67","620 gran turismo":"144","630 gran turismo":"127","640 gran coupe":"94","640 gran turismo":"128","650 gran coupe":"95","i3":"79","i4":"330","i5":"341","i7":"336","i8":"89","ix":"331","ix1":"337","ix2":"346","ix3":"329","m2":"117","m3":"45","m4":"93","m5":"46","m6":"47","m8":"154","m135":"69","m140i":"122","m235":"85","m240i":"123","m340d":"342","m340i":"152","m440":"335","m550":"86","m760":"126","m850":"140","x1":"6","x2":"129","x3":"48","x3 m":"145","x3 m40":"153","x4":"92","x4 m":"146","x4 m40":"119","x5":"49","x5 m":"53","x5 m50":"96","x5 m60":"339","x6":"60","x6 m":"62","x6 m50":"97","x6 m60":"340","x7":"143","x7 m50":"332","x7 m60":"347","xm":"338","z1":"50","z3":"51","z3 m":"57","z4":"52","z4 m":"55","z4 m40":"349","z8":"54","1er m coupe":"87","activehybrid 3":"72","activehybrid 5":"70","activehybrid 7":"63","activehybrid x6":"64"}},"audi":{"c":"1900","m":{"a1":"25","a2":"7","a3":"8","a4":"9","a4 allroad":"33","a5":"31","a6":"10","a6 allroad":"12","a6 e-tron":"66","a7":"34","a8":"11","cabriolet":"13","coupe":"14","e-tron":"50","e-tron gt":"58","q2":"45","q3":"37","q4":"57","q4 e-tron":"61","q5":"32","q6 e-tron":"63","q7":"15","q8":"46","q8 e-tron":"65","quattro":"16","r8":"29","rs2":"26","rs3":"36","rs4":"27","rs5":"17","rs6":"28","rs7":"40","rs e-tron gt":"60","rsq3":"41","rsq8":"55","s1":"42","s2":"18","s3":"19","s4":"20","s5":"30","s6":"21","s6 e-tron":"67","s7":"38","s8":"22","sq2":"47","sq5":"39","sq6 e-tron":"62","sq7":"44","sq8":"54","sq8 e-tron":"64","tt":"23","tt rs":"35","tts":"4","v8":"24"}},"volkswagen":{"c":"25200","m":{"181":"2","amarok":"5","arteon":"64","beetle":"10","bora":"6","buggy":"7","caddy":"9","caddy maxi":"98","cc":"19","corrado":"12","crafter":"3","eos":"41","e-up!":"100","fox":"13","golf":"14","golf plus":"55","golf sportsvan":"40","id.3":"81","id.4":"82","id.5":"93","id.6":"96","id.7":"97","id. buzz":"94","id. polo":"101","iltis":"15","jetta":"16","kafer":"17","karmann ghia":"18","lt":"20","lupo":"21","new beetle":"24","passat":"25","passat alltrack":"62","passat cc":"4","passat variant":"63","phaeton":"26","polo":"27","routan":"8","scirocco":"29","sharan":"30","t-cross":"75","taigo":"86","taro":"35","tayron":"99","tiguan":"54","tiguan allspace":"66","touareg":"36","touran":"37","t-roc":"65","up!":"11","vento":"39","xl1":"38","t1":"42","t2":"31","t3 caravelle":"44","t3 kombi":"22","t3 multivan":"45","t4 california":"33","t4 caravelle":"47","t4 kombi":"23","t4 multivan":"48","t5 california":"34","t5 caravelle":"50","t5 kombi":"32","t5 multivan":"51","t5 shuttle":"52","t5 transporter":"61","t6 california":"58","t6 caravelle":"56","t6 kombi":"57","t6 multivan":"43","t6 transporter":"60","t7 california":"88","t7 caravelle":"89","t7 kombi":"90","t7 multivan":"91","t7 transporter":"92"}},"porsche":{"c":"20100","m":{"911":"2","718 boxster":"42","718 cayman":"43","panamera":"30","macan":"38","cayenne":"19","taycan":"46"}},"ford":{"c":"9000","m":{"aerostar":"2","b-max":"54","bronco":"3","bronco sport":"119","capri":"4","c-max":"52","cougar":"5","courier":"6","crown":"7","econoline":"8","econovan":"9","ecosport":"56","edge":"48","escape":"10","escort":"11","excursion":"12","expedition":"13","explorer":"14","express":"15","f 100":"63","f 150":"16","f 250":"17","f 350":"18","fairlane":"45","falcon":"46","fiesta":"19","flex":"53","focus":"20","fusion":"22","galaxy":"23","granada":"24","grand c-max":"50","grand tourneo":"59","gt":"44","ka/ka+":"25","kuga":"49","maverick":"27","mercury":"28","mondeo":"29","mustang":"30","mustang mach-e":"118","orion":"31","probe":"32","puma":"33","puma gen-e":"123","ranger":"34","raptor":"55","scorpio":"35","sierra":"36","s-max":"47","sportka":"26","streetka":"37","taunus":"38","taurus":"39","thunderbird":"40","tourneo":"41","tourneo connect":"61","tourneo courier":"60","tourneo custom":"62","transit":"42","transit connect":"51","transit courier":"58","transit custom":"57","windstar":"43"}},"skoda":{"c":"22900","m":{"citigo":"17","elroq":"26","enyaq":"25","epiq":"27","fabia":"6","favorit":"7","felicia":"8","forman":"9","kamiq":"24","karoq":"20","kodiaq":"19","octavia":"10","pick-up":"14","praktik":"16","rapid":"18","roomster":"13","scala":"21","superb":"12","yeti":"15"}},"opel":{"c":"19000","m":{"adam":"38","agila":"2","ampera":"28","ampera-e":"45","antara":"34","arena":"3","ascona":"4","astra":"5","astra electric":"51","calibra":"6","campo":"7","cascada":"39","cavalier":"32","combo":"8","combo electric":"50","combo life":"47","commodore":"9","corsa":"10","crossland (x)":"42","diplomat":"11","frontera":"12","grandland (x)":"43","gt":"13","insignia":"35","insignia ct":"40","kadett":"14","karl":"41","manta":"15","meriva":"16","mokka":"37","mokka-e":"49","mokka x":"44","monterey":"17","monza":"18","movano":"19","nova":"33","omega":"20","rekord":"22","rocks-e":"48","senator":"23","signum":"24","sintra":"25","speedster":"26","tigra":"27","vectra":"29","vivaro":"30","zafira":"31","zafira electric":"52","zafira life":"46","zafira tourer":"36"}},"toyota":{"c":"24100","m":{"aygo":"29","yaris":"27","corolla":"6","camry":"7","c-hr":"52","rav4":"9","highlander":"55","land cruiser":"10","prius":"15","proace":"48"}},"volvo":{"c":"25100","m":{"v40":"15","v60":"22","v90":"28","s60":"19","s90":"26","xc40":"33","xc60":"13","xc90":"14"}},"alfa romeo":{"c":"900","m":{"giulietta":"35","giulia":"54","stelvio":"56","tonale":"68"}},"alpina":{"c":"1100","m":{}},"aston martin":{"c":"1700","m":{"db9":"5","db11":"21","vantage":"3","dbx":"25"}},"bentley":{"c":"3100","m":{}},"bugatti":{"c":"4350","m":{}},"byd":{"c":"31953","m":{}},"cadillac":{"c":"4700","m":{}},"caterham":{"c":"5300","m":{}},"chevrolet":{"c":"5600","m":{}},"chrysler":{"c":"5700","m":{}},"citroen":{"c":"5900","m":{"c1":"41","c3":"18","c3 aircross":"74","c4":"19","c5":"45","c5 aircross":"78","berlingo":"13","spacetourer":"73"}},"cupra":{"c":"3","m":{"leon":"1","formentor":"5","ateca":"3","born":"6"}},"dacia":{"c":"6600","m":{"sandero":"5","logan":"1","duster":"10","spring":"12","jogger":"13"}},"daewoo":{"c":"6800","m":{}},"daihatsu":{"c":"7000","m":{}},"dodge":{"c":"7700","m":{}},"ds automobiles":{"c":"235","m":{}},"ferrari":{"c":"8600","m":{}},"fiat":{"c":"8800","m":{"500":"25","panda":"15","tipo":"66","500x":"65","500l":"62","doblo":"20"}},"genesis":{"c":"270","m":{}},"honda":{"c":"11000","m":{"jazz":"18","civic":"4","accord":"2","hr-v":"43","cr-v":"6"}},"hummer":{"c":"11050","m":{}},"hyundai":{"c":"11600","m":{"i10":"27","i20":"29","i30":"14","tucson":"9","santa fe":"10","kona":"60","ioniq":"57","bayon":"69"}},"infiniti":{"c":"11650","m":{}},"jaguar":{"c":"12400","m":{"xe":"23","xf":"8","xj":"3","e-pace":"26","f-pace":"22","i-pace":"27","f-type":"20"}},"jeep":{"c":"12600","m":{}},"kia":{"c":"13200","m":{"picanto":"14","rio":"19","ceed":"26","sportage":"7","sorento":"11","niro":"36","stonic":"38","xceed":"41","ev6":"43"}},"lada":{"c":"14400","m":{}},"lamborghini":{"c":"14600","m":{}},"lancia":{"c":"14700","m":{}},"land rover":{"c":"14800","m":{"range rover":"6","range rover sport":"9","range rover evoque":"14","range rover velar":"22","discovery":"4","discovery sport":"18","defender":"21"}},"lexus":{"c":"15200","m":{"ct":"17","is":"5","es":"22","ls":"6","ux":"24","nx":"20","rx":"8"}},"lotus":{"c":"15900","m":{}},"maserati":{"c":"16600","m":{}},"mazda":{"c":"16800","m":{"2":"17","3":"7","6":"8","cx-3":"39","cx-30":"50","cx-5":"38","mx-5":"22"}},"mclaren":{"c":"137","m":{}},"mg":{"c":"17300","m":{}},"mini":{"c":"17500","m":{"cooper":"3","clubman":"13","countryman":"15","cabrio":"11"}},"mitsubishi":{"c":"17700","m":{"space star":"28","asx":"18","eclipse cross":"30","outlander":"16","l200":"7"}},"nissan":{"c":"18700","m":{"micra":"8","leaf":"38","juke":"35","qashqai":"28","x-trail":"19","navara":"21"}},"peugeot":{"c":"19300","m":{"108":"57","208":"35","308":"22","508":"39","2008":"55","3008":"44","5008":"51","partner":"13","rifter":"74"}},"polestar":{"c":"4","m":{}},"renault":{"c":"20700","m":{"clio":"5","megane":"8","captur":"52","kadjar":"62","scenic":"10","grand scenic":"30","talisman":"63","koleos":"49","arkana":"68","espace":"7"}},"rolls-royce":{"c":"21600","m":{}},"rover":{"c":"21700","m":{}},"saab":{"c":"21800","m":{}},"seat":{"c":"22500","m":{"ibiza":"4","leon":"3","arona":"21","ateca":"19","tarraco":"23","alhambra":"10"}},"smart":{"c":"23000","m":{}},"ssangyong":{"c":"23100","m":{}},"subaru":{"c":"23500","m":{}},"suzuki":{"c":"23600","m":{"swift":"6","ignis":"17","vitara":"13","s-cross":"15","jimny":"9","across":"22"}},"tesla":{"c":"135","m":{"model 3":"3","model s":"1","model x":"2","model y":"4"}},"ineos":{"c":"32033","m":{}},"nio":{"c":"31954","m":{}},"xpeng":{"c":"32208","m":{}},"zeekr":{"c":"32331","m":{}},"vinfast":{"c":"32207","m":{}},"kgm":{"c":"32332","m":{}},"gwm":{"c":"30006","m":{}},"omoda":{"c":"32380","m":{}},"leapmotor":{"c":"32303","m":{}},"geely":{"c":"30005","m":{}},"datsun":{"c":"30002","m":{}}};
+
+  function mdeCode(make) {
+    var mk = (make||'').toLowerCase().trim();
+    var entry = MDE[mk];
+    if (!entry) return null;
+    return { makeCode: entry.c };
+  }
+
+  // HP → KW conversion
+  function hpToKw(hp) { return hp ? Math.round(hp * 0.7355) : null; }
+
+  var SITES=[
+    // ── mobile.de (Russian) ──────────────────────────────────────────
+    {name:"mobile.de",manual:false,build:function(p){
+      var q=["isSearchRequest=true","s=Car","vc=Car"];
+      var codes = mdeCode(p.make);
+      if (codes) q.push('ms=' + codes.makeCode);
+      if(p.yearFrom&&p.yearTo) q.push("fr="+p.yearFrom+"%3A"+p.yearTo);
+      else if(p.yearFrom) q.push("fr="+p.yearFrom);
+      else if(p.yearTo) q.push("fr=%3A"+p.yearTo);
+      if(p.mileageTo) q.push("ml=%3A"+p.mileageTo);
+      if(p.ccFrom||p.ccTo) q.push("cc="+enc((p.ccFrom||"")+":"+(p.ccTo||"")));
+      if(p.fuel) q.push("ft="+(p.fuel==="diesel"?"DIESEL":"PETROL"));
+      if(p.trans) q.push("tr="+(p.trans==="automatic"?"AUTOMATIC_GEAR":"MANUAL_GEAR"));
+      if(p.priceFrom&&p.priceTo) q.push("p="+p.priceFrom+"%3A"+p.priceTo);
+      else if(p.priceFrom) q.push("p="+p.priceFrom+"%3A");
+      else if(p.priceTo) q.push("p=%3A"+p.priceTo);
+      var kwFrom = hpToKw(p.hpFrom), kwTo = hpToKw(p.hpTo);
+      if(kwFrom||kwTo) q.push("pw="+enc((kwFrom||"")+":"+(kwTo||"")));
+      return "https://www.mobile.de/ru/%D1%82%D1%80%D0%B0%D0%BD%D1%81%D0%BF%D0%BE%D1%80%D1%82%D0%BD%D1%8B%D0%B5-%D1%81%D1%80%D0%B5%D0%B4%D1%81%D1%82%D0%B2%D0%B0/%D0%BF%D0%BE%D0%B8%D1%81%D0%BA.html?"+q.join("&");
+    }},
+
+    // ── autoscout24 (Russian) ────────────────────────────────────────
+    {name:"autoscout24.ru",manual:false,build:function(p){
+      var path="https://www.autoscout24.ru/lst";
+      if(p.make) path+="/"+slug(p.make);
+      if(p.make&&p.model) path+="/"+slug(p.model);
+      var q=["atype=C","cy=D%2CA%2CB%2CE%2CF%2CI%2CL%2CNL","ustate=N%2CU","sort=standard","desc=0"];
+      add(q,p.yearFrom,"fregfrom="+p.yearFrom);
+      add(q,p.yearTo,"fregto="+p.yearTo);
+      add(q,p.mileageTo,"kmto="+p.mileageTo);
+      add(q,p.priceFrom,"pricefrom="+p.priceFrom);
+      add(q,p.priceTo,"priceto="+p.priceTo);
+      if(p.trans) q.push("gear="+(p.trans==="automatic"?"A":"M"));
+      if(p.fuel) q.push("fuel="+(p.fuel==="diesel"?"D":"B"));
+      if(p.hpFrom||p.hpTo){ q.push("powertype=hp"); add(q,p.hpFrom,"powerfrom="+p.hpFrom); add(q,p.hpTo,"powerto="+p.hpTo); }
+      return path+"?"+q.join("&");
+    }},
+
+    // ── usedautobank.com/ru ──────────────────────────────────────────
+    {name:"usedautobank.com",manual:false,build:function(p){
+      var UAB_MAKES={"alfa romeo":"22","aston martin":"25","audi":"36","bentley":"74",
+        "bmw":"85","byd":"2741","chevrolet":"2774","chrysler":"120","citroen":"148",
+        "cupra":"2588","dacia":"1178","ferrari":"219","fiat":"228","ford":"231",
+        "honda":"356","hyundai":"384","infiniti":"403","isuzu":"418","jaguar":"437",
+        "jeep":"1233","kia":"454","lamborghini":"472","land rover":"480","lexus":"495",
+        "maserati":"539","mazda":"555","mercedes-benz":"589","mg":"2629","mini":"652",
+        "mitsubishi":"658","nissan":"692","opel":"1051","peugeot":"740","polestar":"2575",
+        "porsche":"793","renault":"806","rolls-royce":"808","saab":"811","seat":"1180",
+        "skoda":"1188","smart":"819","subaru":"821","suzuki":"839","tesla":"1751",
+        "toyota":"861","volkswagen":"901","volvo":"930"};
+      var mk=(p.make||'').toLowerCase().trim();
+      var makeId=UAB_MAKES[mk]||'';
+      var q=["at%5B%5D=open","at%5B%5D=sealed","at%5B%5D=fixed"];
+      if(makeId) q.push("make="+makeId);
+      q.push("auction_location=");
+      q.push("location=");
+      add(q,p.yearFrom,"year_from="+p.yearFrom);
+      add(q,p.yearTo,"year_to="+p.yearTo);
+      if(p.fuel) q.push("fuel="+(p.fuel==="diesel"?"Diesel":"Gasoline"));
+      if(p.trans) q.push("gearbox="+(p.trans==="automatic"?"Automatic":"Manual"));
+      add(q,p.ccFrom,"capacity_from="+p.ccFrom);
+      add(q,p.ccTo,"capacity_to="+p.ccTo);
+      add(q,p.mileageTo,"mileage_to="+p.mileageTo);
+      q.push("price_min="+(p.priceFrom||""));
+      q.push("price_max="+(p.priceTo||""));
+      return "https://www.usedautobank.com/ru/advanced-search/?"+q.join("&")+"#search_results";
+    }},
+
+    // ── autobid.de/ru ────────────────────────────────────────────────
+    // e17: fuel — 3=diesel, 2=petrol
+    // e70: transmission — 3=automatic, 2=manual
+    // powerOutputTo in KW
+    {name:"autobid.de",manual:false,build:function(p){
+      var q=["sortingType=auctionStartDate-ASCENDING"];
+      if(p.make) q.push("manufacturer="+enc(p.make));
+      if(p.model) q.push("name-model="+enc(p.model));
+      add(q,p.yearFrom,"registrationFrom="+p.yearFrom);
+      add(q,p.yearTo,"registrationTo="+p.yearTo);
+      add(q,p.mileageTo,"kilometresTo="+p.mileageTo);
+      add(q,p.priceFrom,"priceFrom="+p.priceFrom);
+      add(q,p.priceTo,"priceTo="+p.priceTo);
+      // e17: fuel (3=diesel, 2=petrol)
+      if(p.fuel) q.push("e17="+(p.fuel==="diesel"?"3":"2"));
+      // e70: transmission (3=automatic, 2=manual)
+      if(p.trans) q.push("e70="+(p.trans==="automatic"?"3":"2"));
+      // Power in KW
+      var kwTo=hpToKw(p.hpTo), kwFrom=hpToKw(p.hpFrom);
+      if(kwFrom) q.push("powerOutputFrom="+kwFrom);
+      if(kwTo)   q.push("powerOutputTo="+kwTo);
+      return "https://autobid.de/ru/rezultaty-poiska?"+q.join("&");
+    }},
+
+    // ── auto1.com/ru ─────────────────────────────────────────────────
+    {name:"auto1.com",manual:false,build:function(p){
+      var q=["channel=24h","dir=asc","powerUnit=hp"];
+      if(p.make) q.push("manufacturers="+enc(p.make));
+      add(q,p.mileageTo,"mileageTo="+p.mileageTo);
+      add(q,p.yearFrom,"regFrom="+p.yearFrom);
+      add(q,p.yearTo,"regTo="+p.yearTo);
+      add(q,p.hpFrom,"powerFrom="+p.hpFrom);
+      add(q,p.hpTo,"powerTo="+p.hpTo);
+      add(q,p.priceFrom,"priceMin="+p.priceFrom);
+      add(q,p.priceTo,"priceMax="+p.priceTo);
+      if(p.fuel) q.push("fuelTypes="+(p.fuel==="diesel"?"diesel":"petrol"));
+      if(p.trans) q.push("gearTypes="+(p.trans==="automatic"?"automatic":"manual"));
+      q.push("sort=relevanceSorting");
+      return "https://www.auto1.com/ru/app/merchant/cars?"+q.join("&");
+    }},
+
+    // ── otomoto.pl ───────────────────────────────────────────────────
+    {name:"otomoto.pl",manual:false,build:function(p){
+      var path="https://www.otomoto.pl/osobowe";
+      // otomoto uses lowercase slugs for make/model in path
+      if(p.make) path+="/"+slug(p.make);
+      if(p.make&&p.model) path+="/"+slug(p.model).replace(/\s+/g,'-');
+      var q=[];
+      add(q,p.yearFrom,"search%5Bfilter_float_year%3Afrom%5D="+p.yearFrom);
+      add(q,p.yearTo,"search%5Bfilter_float_year%3Ato%5D="+p.yearTo);
+      add(q,p.priceFrom,"search%5Bfilter_float_price%3Afrom%5D="+p.priceFrom);
+      add(q,p.priceTo,"search%5Bfilter_float_price%3Ato%5D="+p.priceTo);
+      add(q,p.mileageTo,"search%5Bfilter_float_mileage%3Ato%5D="+p.mileageTo);
+      add(q,p.hpFrom,"search%5Bfilter_float_engine_power%3Afrom%5D="+p.hpFrom);
+      add(q,p.hpTo,"search%5Bfilter_float_engine_power%3Ato%5D="+p.hpTo);
+      if(p.fuel) q.push("search%5Bfilter_enum_fuel_type%5D="+(p.fuel==="diesel"?"diesel":"petrol"));
+      if(p.trans) q.push("search%5Bfilter_enum_gearbox%5D="+(p.trans==="automatic"?"automatic":"manual"));
+      return path+(q.length?"?"+q.join("&"):"");
+    }},
+
+    // ── carvago.com ──────────────────────────────────────────────────
+    {name:"carvago.com",manual:false,build:function(p){
+      var path="https://carvago.com/cars";
+      if(p.make) path+="/"+slug(p.make);
+      if(p.make&&p.model) path+="/"+slug(p.model);
+      var q=[];
+      add(q,p.yearFrom,"registration-date-from="+p.yearFrom);
+      add(q,p.yearTo,"registration-date-to="+p.yearTo);
+      add(q,p.mileageTo,"mileage-to="+p.mileageTo);
+      add(q,p.priceFrom,"price-from="+p.priceFrom);
+      add(q,p.priceTo,"price-to="+p.priceTo);
+      // carvago hp uses kw
+      var kwFrom = hpToKw(p.hpFrom), kwTo = hpToKw(p.hpTo);
+      if(kwFrom) q.push("power-from="+kwFrom);
+      if(kwTo)   q.push("power-to="+kwTo);
+      add(q,p.ccFrom,"cubic-capacity-from="+p.ccFrom);
+      add(q,p.ccTo,"cubic-capacity-to="+p.ccTo);
+      if(p.fuel) q.push("fuel-type[]="+(p.fuel==="diesel"?"diesel":"petrol"));
+      if(p.trans) q.push("transmission[]="+(p.trans==="automatic"?"automatic":"manual"));
+      return path+(q.length?"?"+q.join("&"):"");
+    }},
+
+    // ── ecarstrade.com ───────────────────────────────────────────────
+    {name:"ecarstrade.com",manual:false,build:function(p){
+      // ecarstrade search supports make/model as text params
+      var q=[];
+      if(p.make) q.push("brand%5B%5D="+enc(p.make));
+      if(p.model) q.push("model%5B%5D="+enc(p.model));
+      if(p.fuel) q.push("fuel%5B%5D="+(p.fuel==="diesel"?"Diesel":p.fuel==="electro"?"Electric":"Petrol"));
+      if(p.trans) q.push("gearbox%5B%5D="+(p.trans==="automatic"?"Automatic":"Manual"));
+      add(q,p.mileageTo,"kilom_to="+p.mileageTo);
+      add(q,p.yearFrom,"year_from="+p.yearFrom);
+      add(q,p.yearTo,"year_to="+p.yearTo);
+      add(q,p.priceFrom,"price_from="+p.priceFrom);
+      add(q,p.priceTo,"price_to="+p.priceTo);
+      add(q,p.hpFrom,"power_from="+p.hpFrom);
+      add(q,p.hpTo,"power_to="+p.hpTo);
+      return "https://ru.ecarstrade.com/search"+(q.length?"?"+q.join("&"):"");
+    }},
+
+    // ── marktplaats.nl ───────────────────────────────────────────────
+    {name:"marktplaats.nl",manual:false,build:function(p){
+      // Make codes (marktplaats internal IDs)
+      var MCODES={'skoda':'1186','renault':'1128','bmw':'31','mercedes-benz':'744',
+        'audi':'20','volkswagen':'1270','ford':'461','opel':'909','toyota':'1206',
+        'honda':'541','hyundai':'556','kia':'638','volvo':'1276','peugeot':'963',
+        'citroen':'183','seat':'1067','fiat':'441','nissan':'872','mazda':'760',
+        'mini':'813','land rover':'660','porsche':'980','lexus':'693',
+        'mitsubishi':'829','dacia':'210','suzuki':'1147','alfa romeo':'14'};
+      var mk = (p.make||'').toLowerCase().trim();
+      var makeCode = MCODES[mk] || '';
+      // Fuel codes only if fuel is selected
+      var fuelCode = p.fuel==='diesel' ? '384' : (p.fuel ? '473' : '');
+      var fuelWord = p.fuel==='diesel' ? 'diesel' : (p.fuel ? 'benzine' : '');
+
+      var path = "https://www.marktplaats.nl/l/auto-s/";
+      if(p.make) path += slug(p.make) + "/";
+
+      // Add f/model+fuel/codes only if we have something to add
+      var fSegment = [];
+      if(p.model) fSegment.push(slug(p.model));
+      if(fuelWord) fSegment.push(fuelWord);
+      if(fSegment.length) {
+        path += "f/" + fSegment.join("+") + "/";
+        var codes = [];
+        if(makeCode) codes.push(makeCode);
+        if(fuelCode) codes.push(fuelCode);
+        if(codes.length) path += codes.join("+") + "/";
+      }
+
+      var h=[];
+      add(h,p.yearFrom,"constructionYearFrom:"+p.yearFrom);
+      add(h,p.yearTo,"constructionYearTo:"+p.yearTo);
+      add(h,p.mileageTo,"mileageTo:"+p.mileageTo);
+      if(p.priceFrom) h.push("PriceCentsFrom:"+(parseInt(p.priceFrom)*100));
+      if(p.priceTo)   h.push("PriceCentsTo:"+(parseInt(p.priceTo)*100));
+      add(h,p.ccFrom,"engineDisplacementFrom:"+p.ccFrom);
+      add(h,p.ccTo,"engineDisplacementTo:"+p.ccTo);
+      if(p.trans) h.push("transmission:"+(p.trans==="automatic"?"Automaat":"Handgeschakeld"));
+      return path+(h.length?"#"+h.join("|"):"");
+    }}
+  ];
+  var listEl=document.getElementById('sitesList');
+  SITES.forEach(function(site){
+    var a=document.createElement('a');
+    a.className='site-link';a.target='_blank';a.rel='noopener';a.href='#';
+    var left=document.createElement('span');left.className='site-name';left.textContent=site.name;
+    var right=document.createElement('span');
+    if(site.manual){var t=document.createElement('span');t.className='site-tag';t.textContent='выбрать марку';right.appendChild(t);}
+    var ar=document.createElement('span');ar.className='site-arrow';ar.innerHTML='&rarr;';
+    a.appendChild(left);a.appendChild(right);right.appendChild(ar);
+    a.addEventListener('click',function(e){e.preventDefault();window.open(site.build(params()),'_blank','noopener');});
+    listEl.appendChild(a);
+  });
+  var openBtn=document.getElementById('openAll');
+  var popupNote=document.getElementById('popupNote');
+  openBtn.addEventListener('click',function(){
+    var p=params();var urls=SITES.map(function(s){return s.build(p);});
+    var blocked=0,i=0;openBtn.disabled=true;var orig=openBtn.textContent;popupNote.style.display='none';
+    function openNext(){if(i>=urls.length){openBtn.disabled=false;openBtn.textContent=orig;popupNote.style.display=blocked?'block':'none';return;}var w=window.open(urls[i],'_blank','noopener');if(!w)blocked++;i++;openBtn.textContent='Открываю '+i+' из '+urls.length+'…';setTimeout(openNext,500);}
+    openNext();
+  });
+  // ── ADVANCED SEARCH ────────────────────────────────────────────────
+  var SERVER_URL = SERVER; // uses the same URL as above
+  var advToggle  = document.getElementById('advToggle');
+  var advPanel   = document.getElementById('advPanel');
+  var advSearchBtn = document.getElementById('advSearchBtn');
+  var advSearchLabel = document.getElementById('advSearchLabel');
+  var advSteps   = document.getElementById('advSteps');
+  var advResults = document.getElementById('advResults');
+  var advResultsHeader = document.getElementById('advResultsHeader');
+  var advTrims   = document.getElementById('advTrims');
+  var advLinks   = document.getElementById('advLinks');
+  var selectedEquip = '';
+
+  // Toggle panel
+  advToggle.addEventListener('click', function(){
+    advToggle.classList.toggle('open');
+    advPanel.classList.toggle('open');
+  });
+
+  // Equipment buttons
+  document.querySelectorAll('.equip-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.equip-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectedEquip = btn.dataset.eq;
+    });
+  });
+
+  function advStep(text, done){
+    var div = document.createElement('div');
+    div.className = 'adv-step' + (done ? ' done' : '');
+    div.innerHTML = done ? text : '<span class="spinner"></span>' + text;
+    advSteps.appendChild(div);
+    return div;
+  }
+
+  function domainOf(url){
+    try { return new URL(url).hostname.replace('www.',''); } catch(e){ return url; }
+  }
+
+  advSearchBtn.addEventListener('click', async function(){
+    var p = params();
+    if(!p.make){ alert('Введите марку автомобиля'); return; }
+    if(!selectedEquip){ alert('Выберите уровень комплектации'); return; }
+
+    advSearchBtn.disabled = true;
+    advSearchLabel.innerHTML = '<span class="spinner"></span>Поиск…';
+    advSteps.innerHTML = '';
+    advResults.style.display = 'none';
+
+    var s1 = advStep('Определяю комплектации через AI…');
+    var s2, s3;
+
+    try {
+      var extra = document.getElementById('advExtra').value.trim();
+      var body = {
+        make: p.make, model: p.model,
+        yearFrom: p.yearFrom, yearTo: p.yearTo,
+        priceFrom: p.priceFrom, priceTo: p.priceTo,
+        mileageTo: p.mileageTo, fuel: p.fuel, trans: p.trans,
+        hpFrom: p.hpFrom, hpTo: p.hpTo,
+        equipment: selectedEquip, extra: extra
+      };
+
+      // Show live steps
+      s2 = advStep('Ищу объявления в интернете…');
+
+      var resp = await fetch(SERVER_URL + '/advanced-search', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      });
+
+      if (!resp.ok) throw new Error('Server error: ' + resp.status);
+      var data = await resp.json();
+      if (!data.ok) throw new Error(data.error || 'Unknown error');
+
+      // Mark steps done
+      s1.className = 'adv-step done';
+      s1.innerHTML = 'Комплектации определены: ' + (data.trims||[]).join(', ');
+      s2.className = 'adv-step done';
+      s2.innerHTML = 'Объявления найдены и отфильтрованы';
+
+      // Show results
+      advResults.style.display = 'block';
+      var equipLabels = {basic:'Базовая', good:'Хорошая', top:'Топ'};
+      advResultsHeader.textContent = 'Результаты для ' + (p.make||'') + ' ' + (p.model||'') + ' · ' + (equipLabels[selectedEquip]||selectedEquip) + ' · найдено: ' + (data.results||[]).length + ' объявлений';
+
+      // Trim tags
+      advTrims.innerHTML = '';
+      if(data.trims && data.trims.length){
+        data.trims.forEach(function(t){
+          var tag = document.createElement('span');
+          tag.className = 'adv-trim-tag';
+          tag.textContent = t;
+          advTrims.appendChild(tag);
+        });
+      }
+
+      // Links
+      advLinks.innerHTML = '';
+      if(!data.results || data.results.length === 0){
+        advLinks.innerHTML = '<div style="font-size:14px;color:var(--hint);padding:16px 0;">' + (data.message||'Ничего не найдено. Попробуйте расширить параметры.') + '</div>';
+      } else {
+        data.results.forEach(function(url){
+          var card = document.createElement('a');
+          card.className = 'adv-link-card';
+          card.href = url;
+          card.target = '_blank';
+          card.rel = 'noopener';
+          var domain = document.createElement('div');
+          domain.className = 'adv-link-domain';
+          domain.textContent = domainOf(url);
+          var link = document.createElement('div');
+          link.className = 'adv-link-url';
+          link.textContent = decodeURIComponent(url);
+          card.appendChild(domain);
+          card.appendChild(link);
+          advLinks.appendChild(card);
+        });
+      }
+    } catch(e) {
+      advSteps.innerHTML += '<div style="color:#c0392b;font-size:13px;margin-top:8px;">Ошибка: ' + e.message + '</div>';
+    }
+
+    advSearchBtn.disabled = false;
+    advSearchLabel.textContent = '🔍 Найти по комплектации';
+  });
+
+  document.getElementById('clearBtn').addEventListener('click',function(){
+    ['make','model','yearFrom','yearTo','priceFrom','priceTo','mileageTo','ccFrom','ccTo','hpFrom','hpTo','fuel','trans'].forEach(function(id){document.getElementById(id).value='';});
+    fillModels();popupNote.style.display='none';
+  });
+
+  /* ===== WATCHLIST ===== */
+  var STORAGE_KEY = 'avb_watchlist_v1';
+  var STATUS_LABELS = ['На рассмотрении', 'Куплена', 'Доставлена'];
+  var STATUS_CLASSES = ['s0', 's1', 's2'];
+  var cars = loadCars();
+  var sortCol = ''; var sortDir = 1;
+  var checkedIds = new Set();
+  var lbCurrentCar = null; // car whose photos are open in lightbox
+
+  function loadCars(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }catch(e){ return []; } }
+  function saveCars(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(cars)); }
+  function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+  var SERVER = 'https://YOUR-APP.railway.app'; // ← replace with your Railway URL
+  var GEMINI_KEY = ''; // set via prompt on first use
+
+  // ── Custom Modal ─────────────────────────────────────────────────
+  var modalOverlay = document.getElementById('modalOverlay');
+  var modalTitle   = document.getElementById('modalTitle');
+  var modalText    = document.getElementById('modalText');
+  var modalInput   = document.getElementById('modalInput');
+  var modalOk      = document.getElementById('modalOk');
+  var modalCancel  = document.getElementById('modalCancel');
+  var _modalResolve = null;
+
+  function showModal(opts) {
+    // opts: { title, text, input, placeholder, okLabel, okClass, cancelLabel }
+    return new Promise(function(resolve) {
+      _modalResolve = resolve;
+      modalTitle.textContent = opts.title || '';
+      modalText.textContent  = opts.text  || '';
+      if (opts.input) {
+        modalInput.style.display = '';
+        modalInput.value = opts.inputValue || '';
+        modalInput.placeholder = opts.placeholder || '';
+        setTimeout(function(){ modalInput.focus(); }, 80);
+      } else {
+        modalInput.style.display = 'none';
+      }
+      modalOk.textContent = opts.okLabel || 'OK';
+      modalOk.className = 'modal-btn ' + (opts.okClass || 'modal-btn-ok');
+      modalCancel.textContent = opts.cancelLabel || 'Отмена';
+      modalCancel.style.display = opts.noCancel ? 'none' : '';
+      modalOverlay.classList.add('open');
+    });
+  }
+
+  function closeModal(value) {
+    modalOverlay.classList.remove('open');
+    if (_modalResolve) { _modalResolve(value); _modalResolve = null; }
+  }
+
+  modalOk.addEventListener('click', function(){ closeModal(modalInput.style.display !== 'none' ? modalInput.value : true); });
+  modalCancel.addEventListener('click', function(){ closeModal(null); });
+  modalOverlay.addEventListener('click', function(e){ if(e.target===modalOverlay) closeModal(null); });
+  modalInput.addEventListener('keydown', function(e){ if(e.key==='Enter') modalOk.click(); if(e.key==='Escape') closeModal(null); });
+
+  // ── Extract from server ───────────────────────────────────────────
+  async function extractCarData(url) {
+    var resp = await fetch(SERVER + '/extract', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ url: url })
+    });
+    var json = await resp.json();
+    if (!resp.ok || json.error) throw new Error(json.error || 'Server error');
+    return json.data;
+  }
+
+  // ── Add car from URL ──────────────────────────────────────────────
+  var urlInput  = document.getElementById('wlUrlInput');
+  var addBtn    = document.getElementById('wlAddBtn');
+  var addStatus = document.getElementById('wlAddStatus');
+
+  addBtn.addEventListener('click', async function(){
+    var url = urlInput.value.trim();
+    if (!url || !url.startsWith('http')) {
+      showStatus('Введите корректную ссылку (начинается с https://…)', true); return;
+    }
+    addBtn.disabled = true;
+    addStatus.className = 'wl-add-status';
+    addStatus.innerHTML = '<span class="spinner"></span>Загружаю страницу… (15–30 сек)';
+    try {
+      var d = await extractCarData(url);
+      var car = {
+        id: genId(), url: url,
+        make: d.make||'', model: d.model||'', mileage: d.mileage||null, hp: d.hp||null,
+        regMonth: d.regMonth||null, regYear: d.regYear||null,
+        vin: d.vin||'', fuel: d.fuel||'', cc: d.cc||null,
+        priceNetto: d.priceNetto||null, priceBrutto: d.priceBrutto||null,
+        location: d.location||'', seller: d.seller||'',
+        photos: Array.isArray(d.photos) ? d.photos.slice(0,10) : [],
+        status: 0, addedAt: Date.now()
+      };
+      cars.unshift(car); saveCars(); urlInput.value = '';
+      showStatus('✓ Добавлено: ' + ([car.make,car.model].filter(Boolean).join(' ')||'авто'), false);
+      renderTable();
+    } catch(e) { showStatus('Ошибка: ' + e.message, true); }
+    addBtn.disabled = false;
+  });
+  urlInput.addEventListener('keydown', function(e){ if(e.key==='Enter') addBtn.click(); });
+  function showStatus(msg, isErr){
+    addStatus.textContent = msg;
+    addStatus.className = 'wl-add-status' + (isErr?' err':'');
+  }
+
+  // ── Screenshot → AI fill ─────────────────────────────────────────
+  var screenshotBtn = document.getElementById('screenshotBtn');
+  var selectCountEl = document.getElementById('selectCount');
+
+  function updateActionBar(){
+    var n = checkedIds.size;
+    selectCountEl.textContent = n > 0 ? ('Выбрано: ' + n) : '';
+  }
+
+    screenshotBtn.addEventListener('click', async function(){
+    var MODE = checkedIds.size > 0 ? 'fill' : 'new';
+    var selectedCars = MODE === 'fill' ? cars.filter(function(c){ return checkedIds.has(c.id); }) : [];
+
+    // Fetch Gemini key from server
+    if (!GEMINI_KEY) {
+      try {
+        var keyResp = await fetch(SERVER + '/gemini-key');
+        var keyJson = await keyResp.json();
+        GEMINI_KEY = keyJson.key || '';
+      } catch(e) {}
+    }
+    if (!GEMINI_KEY) {
+      await showModal({ title: 'Ключ не найден', text: 'Добавьте GEMINI_KEY в server.js и перезапустите сервер.', noCancel:true, okLabel:'OK' });
+      return;
+    }
+
+    // File picker
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file'; fileInput.accept = 'image/*';
+    fileInput.addEventListener('change', async function(){
+      var file = fileInput.files[0];
+      if (!file) return;
+      screenshotBtn.disabled = true;
+      screenshotBtn.innerHTML = '<span class="spinner"></span>Анализирую…';
+
+      var b64 = await new Promise(function(resolve){
+        var reader = new FileReader();
+        reader.onload = function(){ resolve(reader.result.split(',')[1]); };
+        reader.readAsDataURL(file);
+      });
+
+      var prompt, results;
+      try {
+        if (MODE === 'new') {
+          // ── CREATE new listing from screenshot ────────────────────
+          prompt = 'You are extracting car listing data from a screenshot. Look carefully at ALL text in the image including small print, tables, and labels.\n\nReturn ONLY a raw JSON object, no markdown:\n{"make":null,"model":null,"mileage":null,"hp":null,"regMonth":null,"regYear":null,"vin":null,"fuel":null,"cc":null,"priceNetto":null,"priceBrutto":null,"location":null,"seller":null,"photoUrls":[]}\n\nRules:\n- vin: look for a 17-character alphanumeric code (VIN), often labeled VIN, ФИН, Идентификационный номер, Fahrzeugidentifikationsnummer — extract exactly as shown\n- regMonth: registration month as number 1-12\n- regYear: registration year as 4-digit number\n- fuel: exactly "Бензин", "Дизель", "Электро", "Гибрид" or "Газ"\n- location: full address with ZIP/postal code\n- all prices and numbers: digits only, no currency symbols\n- photoUrls: any visible http image URLs, empty array if none\n- null for any field not found';
+        } else {
+          // ── FILL missing fields of checked cars ───────────────────
+          var carDescriptions = selectedCars.map(function(c){
+            var missing = [];
+            ['make','model','mileage','hp','regMonth','regYear','vin','fuel','cc','priceNetto','priceBrutto','location','seller'].forEach(function(f){
+              if(c[f]===null||c[f]===''||c[f]===undefined) missing.push(f);
+            }); // vin instead of gear
+            return 'Car id:'+c.id+' missing: '+missing.join(',');
+          }).join('\n');
+          prompt = 'Screenshot of a car listing. Look carefully at ALL text including small print and labels. Fill ONLY the missing fields listed below.\n'+carDescriptions+'\nIMPORTANT: For VIN — search for any 17-character alphanumeric code labeled VIN, ФИН, Fahrzeugidentifikationsnummer, or similar.\nReturn ONLY a JSON array: [{"id":"...","fieldName":value}] with only the missing fields filled. null if genuinely not visible.';
+        }
+
+        // Gemini multimodal request — camelCase keys, responseMimeType for clean JSON
+        var requestBody = {
+          contents:[{parts:[
+            {text:prompt},
+            {inlineData:{mimeType:file.type, data:b64}}
+          ]}],
+          generationConfig:{temperature:0, maxOutputTokens:8192, responseMimeType:'application/json'}
+        };
+
+        var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+GEMINI_KEY, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(requestBody)
+        });
+
+        if (!resp.ok) {
+          var errData = await resp.json();
+          throw new Error('Gemini API error ' + resp.status + ': ' + JSON.stringify(errData?.error?.message || errData));
+        }
+
+        var data = await resp.json();
+
+        // Check for blocked content
+        if (data?.candidates?.[0]?.finishReason === 'SAFETY') {
+          throw new Error('Gemini отказал по причинам безопасности. Попробуйте другой скриншот.');
+        }
+        if (!data?.candidates?.length) {
+          throw new Error('Gemini вернул пустой ответ. Детали: ' + JSON.stringify(data).slice(0,300));
+        }
+
+        var rawText = (data.candidates[0]?.content?.parts?.[0]?.text || '').trim();
+        console.log('Gemini raw:', rawText.slice(0,300));
+        results = JSON.parse(rawText);
+
+        if (MODE === 'new') {
+          // Create new car from extracted data
+          var d = results;
+          // Collect photos: any URLs Gemini found + the screenshot itself
+          var extractedUrls = Array.isArray(d.photoUrls) ? d.photoUrls.filter(function(u){ return u && u.startsWith('http'); }) : [];
+          var screenshotDataUrl = 'data:' + file.type + ';base64,' + b64;
+          var photos = extractedUrls.slice(0, 9).concat([screenshotDataUrl]);
+          var newCar = {
+            id:genId(), url:'', make:d.make||'', model:d.model||'',
+            mileage:d.mileage||null, hp:d.hp||null,
+            regMonth:d.regMonth||null, regYear:d.regYear||null,
+            vin:d.vin||'', fuel:d.fuel||'', cc:d.cc||null,
+            priceNetto:d.priceNetto||null, priceBrutto:d.priceBrutto||null,
+            location:d.location||'', seller:d.seller||'',
+            photos:photos, status:0, addedAt:Date.now()
+          };
+          cars.unshift(newCar); saveCars(); renderTable();
+          await showModal({ title:'✓ Авто добавлено', text:([newCar.make,newCar.model].filter(Boolean).join(' ')||'Новое авто')+' добавлено в список. Фото: '+(extractedUrls.length ? extractedUrls.length+' ссылок + скриншот' : 'скриншот сохранён'), noCancel:true, okLabel:'Отлично' });
+        } else {
+          // Fill missing fields of checked cars
+          var filled = 0;
+          results.forEach(function(r){
+            var car = cars.find(function(c){ return c.id===r.id; });
+            if(!car) return;
+            ['make','model','mileage','hp','regMonth','regYear','vin','fuel','cc','priceNetto','priceBrutto','location','seller'].forEach(function(f){
+              if((car[f]===null||car[f]===''||car[f]===undefined) && r[f]!=null){ car[f]=r[f]; filled++; }
+            });
+          });
+          // Add screenshot as photo to checked cars that have no photos
+          var screenshotDataUrl3 = 'data:' + file.type + ';base64,' + b64;
+          selectedCars.forEach(function(car){
+            if(!car.photos || car.photos.filter(Boolean).length === 0){
+              car.photos = [screenshotDataUrl3];
+            }
+          });
+          // Auto-uncheck all after fill
+          checkedIds.clear();
+          saveCars(); renderTable();
+          await showModal({ title:'Готово', text:'Заполнено полей: '+filled+'. Скриншот добавлен как фото к авто без фото.', noCancel:true, okLabel:'Отлично' });
+        }
+      } catch(e) {
+        await showModal({ title:'Ошибка', text:'Не удалось распознать: '+e.message, noCancel:true, okLabel:'OK' });
+      }
+
+      screenshotBtn.disabled = false;
+      screenshotBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 3l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>Добавить из скриншота';
+    });
+    fileInput.click();
+  });
+
+  // ── Filters ───────────────────────────────────────────────────────
+  var fSearch = document.getElementById('fSearch');
+  fSearch.addEventListener('input', renderTable);
+  function applyFilters(list){
+    var q = fSearch.value.trim().toLowerCase();
+    if(!q) return list;
+    return list.filter(function(c){ return ((c.make||'')+' '+(c.model||'')).toLowerCase().includes(q); });
+  }
+
+  // ── Sorting ───────────────────────────────────────────────────────
+  document.querySelectorAll('table.wl-table th[data-col]').forEach(function(th){
+    th.addEventListener('click', function(){
+      var col = th.dataset.col;
+      if(sortCol===col) sortDir*=-1; else { sortCol=col; sortDir=1; }
+      document.querySelectorAll('table.wl-table th').forEach(function(t){ t.classList.remove('sorted'); });
+      th.classList.add('sorted');
+      th.querySelector('.sort-arrow').textContent = sortDir===1?'↑':'↓';
+      renderTable();
+    });
+  });
+  function sortedList(list){
+    if(!sortCol) return list;
+    return list.slice().sort(function(a,b){
+      var av=a[sortCol], bv=b[sortCol];
+      if(av==null&&bv==null) return 0; if(av==null) return 1; if(bv==null) return -1;
+      if(typeof av==='string') return av.localeCompare(bv)*sortDir;
+      return (av-bv)*sortDir;
+    });
+  }
+
+  // ── Render ────────────────────────────────────────────────────────
+  var tbody   = document.getElementById('wlTbody');
+  var emptyEl = document.getElementById('wlEmpty');
+  var countEl = document.getElementById('wlCount');
+
+  function renderTable(){
+    var filtered = applyFilters(cars);
+    var sorted   = sortedList(filtered);
+    tbody.innerHTML = '';
+    var total = cars.length;
+    countEl.textContent = total===0 ? '' : ('Показано: '+sorted.length+' из '+total);
+    emptyEl.style.display  = total===0 ? 'block' : 'none';
+    document.getElementById('wlTable').style.display = total===0 ? 'none' : '';
+
+    sorted.forEach(function(car){
+      var tr = document.createElement('tr');
+
+      // Checkbox
+      var tdCb = document.createElement('td');
+      tdCb.className = 'td-cb';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.className = 'wl-cb';
+      cb.checked = checkedIds.has(car.id);
+      (function(carId){
+        cb.addEventListener('change', function(){
+          if(cb.checked){
+            // Uncheck all others first
+            checkedIds.clear();
+            checkedIds.add(carId);
+            // Visually uncheck all other checkboxes
+            document.querySelectorAll('.wl-cb').forEach(function(box){
+              if(box !== cb) box.checked = false;
+            });
+          } else {
+            checkedIds.delete(carId);
+          }
+          updateActionBar();
+        });
+      })(car.id);
+      tdCb.appendChild(cb); tr.appendChild(tdCb);
+
+      // Photos
+      var tdPhoto = document.createElement('td');
+      var strip = document.createElement('div');
+      strip.className = 'photo-strip';
+      (function(carRef, stripEl){
+        function rebuildStrip(){
+          var photos = (carRef.photos||[]).filter(Boolean);
+          stripEl.innerHTML = '';
+          if(photos.length === 0){
+            // No photos — show add button
+            var addBtn2 = document.createElement('button');
+            addBtn2.className = 'photo-add-btn';
+            addBtn2.title = 'Добавить фото';
+            addBtn2.innerHTML = '<svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>фото</span>';
+            addBtn2.addEventListener('click', async function(e){
+              e.stopPropagation();
+              var url = await showModal({ title:'Добавить фото', text:'Вставьте URL изображения:', input:true, placeholder:'https://...', okLabel:'Добавить' });
+              if(url && url.startsWith('http')){
+                if(!carRef.photos) carRef.photos=[];
+                carRef.photos.push(url); saveCars(); rebuildStrip();
+              }
+            });
+            stripEl.appendChild(addBtn2);
+          } else {
+            // Show 1 photo
+            (function(allPhotos){
+              var img = document.createElement('img');
+              img.src = allPhotos[0]; img.alt = '';
+              img.title = 'Нажмите для просмотра';
+              img.onerror = function(){ this.style.display='none'; };
+              img.addEventListener('click', function(e){ e.stopPropagation(); openLightbox(carRef, 0); });
+              stripEl.appendChild(img);
+            })(photos);
+            // +N button if more
+            if(photos.length > 1){
+              var more = document.createElement('div');
+              more.className = 'photo-more';
+              more.textContent = '+' + (photos.length-1);
+              more.title = 'Ещё '+(photos.length-1)+' фото';
+              more.addEventListener('click', function(e){ e.stopPropagation(); openLightbox(carRef, 1); });
+              stripEl.appendChild(more);
+            }
+          }
+        }
+        carRef._rebuildStrip = rebuildStrip;
+        rebuildStrip();
+      })(car, strip);
+      tdPhoto.appendChild(strip); tr.appendChild(tdPhoto);
+
+      // Make/Model
+      var tdMake = document.createElement('td');
+      tdMake.innerHTML = '<div class="td-inner"><div class="car-make-model">'+esc(car.make)+(car.model?' <span style="font-weight:400">'+esc(car.model)+'</span>':'')+'</div>'+(car.url?'<a class="car-link" href="'+esc(car.url)+'" target="_blank" rel="noopener">Открыть ссылку →</a>':'')+'</div>';
+      tr.appendChild(tdMake);
+
+      tr.appendChild(tdText(car.mileage ? numFmt(car.mileage)+' км' : '—'));
+      tr.appendChild(tdText(car.hp ? car.hp+' л.с.' : '—'));
+      // Регистрация — MM/YYYY editable combined field
+      (function(carRef){
+        var tdReg = document.createElement('td');
+        var inp = document.createElement('input');
+        inp.type = 'text';
+        inp.value = (carRef.regMonth && carRef.regYear)
+          ? pad(carRef.regMonth) + '/' + carRef.regYear
+          : (carRef.regYear ? carRef.regYear : '');
+        inp.placeholder = 'ММ/ГГГГ';
+        inp.title = 'Формат: ММ/ГГГГ или ГГГГ';
+        inp.style.cssText = 'width:88px;height:30px;padding:0 6px;font-size:13px;color:var(--ink);border:1px solid transparent;border-radius:6px;background:transparent;font-family:inherit;outline:none;';
+        inp.addEventListener('focus', function(){ this.style.borderColor='var(--accent)'; this.style.background='var(--card)'; });
+        inp.addEventListener('blur', function(){
+          this.style.borderColor='transparent'; this.style.background='transparent';
+          var v = this.value.trim();
+          if (!v) { carRef.regMonth=null; carRef.regYear=null; saveCars(); return; }
+          // Parse MM/YYYY or YYYY
+          var parts = v.split('/');
+          if (parts.length === 2) {
+            var m = parseInt(parts[0]), y = parseInt(parts[1]);
+            if (m >= 1 && m <= 12 && y >= 1900) { carRef.regMonth=m; carRef.regYear=y; }
+          } else {
+            var y2 = parseInt(v);
+            if (y2 >= 1900) { carRef.regYear=y2; carRef.regMonth=null; }
+          }
+          saveCars();
+        });
+        var wrap = document.createElement('div'); wrap.className='td-inner'; wrap.appendChild(inp); tdReg.appendChild(wrap);
+        tr.appendChild(tdReg);
+      })(car);
+      // VIN — editable
+      tr.appendChild(tdEditable(car, 'vin', 'text', '—', '115px', 'font-size:12px;letter-spacing:.03em;font-family:monospace;'));
+      tr.appendChild(tdText(car.fuel||'—'));
+      tr.appendChild(tdText(car.cc ? numFmt(car.cc)+' см³' : '—'));
+
+      // Editable prices
+      (function(carRef){
+        var tdP = document.createElement('td');
+        var inpN = document.createElement('input');
+        inpN.type='number'; inpN.value=carRef.priceNetto||''; inpN.placeholder='—';
+        inpN.style.cssText='width:88px;height:30px;padding:0 6px;font-size:14px;font-weight:700;color:var(--accent-ink);border:1px solid transparent;border-radius:6px;background:transparent;font-family:inherit;';
+        inpN.addEventListener('focus',function(){ this.style.borderColor='var(--accent)'; this.style.background='var(--card)'; });
+        inpN.addEventListener('blur', function(){ this.style.borderColor='transparent'; this.style.background='transparent'; carRef.priceNetto=this.value?parseInt(this.value):null; saveCars(); });
+        var wN=document.createElement('div'); wN.className='td-inner'; wN.appendChild(inpN); tdP.appendChild(wN); tr.appendChild(tdP);
+        var tdPb=document.createElement('td');
+        var inpB=document.createElement('input');
+        inpB.type='number'; inpB.value=carRef.priceBrutto||''; inpB.placeholder='—';
+        inpB.style.cssText='width:88px;height:30px;padding:0 6px;font-size:14px;color:var(--muted);border:1px solid transparent;border-radius:6px;background:transparent;font-family:inherit;';
+        inpB.addEventListener('focus',function(){ this.style.borderColor='var(--accent)'; this.style.background='var(--card)'; });
+        inpB.addEventListener('blur', function(){ this.style.borderColor='transparent'; this.style.background='transparent'; carRef.priceBrutto=this.value?parseInt(this.value):null; saveCars(); });
+        var wB=document.createElement('div'); wB.className='td-inner'; wB.appendChild(inpB); tdPb.appendChild(wB); tr.appendChild(tdPb);
+      })(car);
+
+      // Локация — editable
+      tr.appendChild(tdEditable(car, 'location', 'text', '—', '200px'));
+      // Продавец — editable
+      tr.appendChild(tdEditable(car, 'seller', 'text', '—', '180px'));
+
+      // Date
+      var tdDate=document.createElement('td');
+      var dateStr=car.addedAt?(function(ts){ var d=new Date(ts); return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear(); })(car.addedAt):'—';
+      tdDate.innerHTML='<div class="td-inner" style="font-size:13px;color:var(--muted);text-align:center;">'+esc(dateStr)+'</div>';
+      tr.appendChild(tdDate);
+
+      // Status
+      var tdSt=document.createElement('td');
+      var sel=document.createElement('select');
+      sel.className='status-sel '+STATUS_CLASSES[car.status||0];
+      STATUS_LABELS.forEach(function(l,i){ var o=document.createElement('option'); o.value=i; o.textContent=l; if(i===car.status) o.selected=true; sel.appendChild(o); });
+      sel.addEventListener('change',function(){ car.status=parseInt(sel.value); sel.className='status-sel '+STATUS_CLASSES[car.status]; saveCars(); });
+      var stWrap=document.createElement('div'); stWrap.className='td-inner'; stWrap.style.cssText='display:flex;align-items:center;padding:10px 12px;'; stWrap.appendChild(sel); tdSt.appendChild(stWrap); tr.appendChild(tdSt);
+
+      // Delete
+      var tdDel=document.createElement('td');
+      var delBtn=document.createElement('button');
+      delBtn.className='del-btn'; delBtn.title='Удалить'; delBtn.textContent='×';
+      delBtn.addEventListener('click', async function(){
+        var ok = await showModal({ title:'Удалить авто?', text:(car.make||'')+(car.model?' '+car.model:''), okLabel:'Удалить', okClass:'modal-btn-danger' });
+        if(ok){ cars=cars.filter(function(c){ return c.id!==car.id; }); checkedIds.delete(car.id); saveCars(); updateActionBar(); renderTable(); }
+      });
+      var delWrap=document.createElement('div'); delWrap.className='td-inner'; delWrap.style.cssText='display:flex;align-items:center;justify-content:center;padding:10px 8px;'; delWrap.appendChild(delBtn); tdDel.appendChild(delWrap); tr.appendChild(tdDel);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function tdText(txt){ var td=document.createElement('td'); td.innerHTML='<div class="td-inner">'+esc(String(txt))+'</div>'; return td; }
+
+  function tdEditable(carRef, field, type, placeholder, width, extraCss) {
+    var td  = document.createElement('td');
+    td.style.maxWidth = width || '120px';
+    var inp = document.createElement('input');
+    inp.type = type || 'text';
+    inp.value = carRef[field] || '';
+    inp.placeholder = placeholder || '—';
+    inp.title = carRef[field] || ''; // tooltip shows full text on hover
+    // Use 100% width so it fills the column, text-overflow ellipsis when not focused
+    inp.style.cssText = 'width:100%;height:30px;padding:0 6px;font-size:13px;color:var(--ink);border:1px solid transparent;border-radius:6px;background:transparent;font-family:inherit;outline:none;text-overflow:ellipsis;'+(extraCss||'');
+    inp.addEventListener('focus', function(){
+      this.style.borderColor='var(--accent)';
+      this.style.background='var(--card)';
+      this.style.textOverflow='clip'; // show full text when editing
+      this.title = '';
+    });
+    inp.addEventListener('blur', function(){
+      this.style.borderColor='transparent';
+      this.style.background='transparent';
+      this.style.textOverflow='ellipsis';
+      var v = this.value.trim();
+      carRef[field] = v || null;
+      this.title = v; // update tooltip
+      saveCars();
+    });
+    inp.addEventListener('input', function(){ this.title = this.value; });
+    var wrap = document.createElement('div'); wrap.className='td-inner'; wrap.style.overflow='hidden'; wrap.appendChild(inp); td.appendChild(wrap);
+    return td;
+  }
+  function numFmt(n){ return Number(n).toLocaleString('ru-RU'); }
+  function pad(n){ return n<10?'0'+n:''+n; }
+  function esc(s){ var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+  renderTable();
+
+  // ── LIGHTBOX ──────────────────────────────────────────────────────
+  var lbPhotos      = [];
+  var lbIndex       = 0;
+  var lbCurrentCar  = null;
+
+  function openLightbox(carRef, idx) {
+    lbCurrentCar = carRef;
+    lbPhotos = (carRef.photos||[]).filter(Boolean);
+    lbIndex  = Math.min(idx, lbPhotos.length - 1);
+    document.getElementById('lbOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    renderLightbox();
+  }
+
+  function closeLightbox() {
+    document.getElementById('lbOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+    lbCurrentCar = null;
+  }
+
+  function renderLightbox() {
+    document.getElementById('lbImg').src = lbPhotos[lbIndex] || '';
+    var nav = document.getElementById('lbNav');
+    nav.innerHTML = '';
+    lbPhotos.forEach(function(src, i) {
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'position:relative;display:inline-block;flex-shrink:0;';
+      var th = document.createElement('img');
+      th.src = src; th.className = 'lb-thumb' + (i===lbIndex?' active':'');
+      th.addEventListener('click', function(){ lbIndex=i; renderLightbox(); });
+      wrap.appendChild(th);
+      // Delete button on thumbnail
+      var delX = document.createElement('button');
+      delX.textContent = '×';
+      delX.style.cssText = 'position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:#e74c3c;color:#fff;border:none;cursor:pointer;font-size:11px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;';
+      delX.title = 'Удалить фото';
+      (function(idx){
+        delX.addEventListener('click', function(e){
+          e.stopPropagation();
+          if(!lbCurrentCar) return;
+          lbCurrentCar.photos.splice(idx, 1);
+          saveCars();
+          lbPhotos = lbCurrentCar.photos.filter(Boolean);
+          if(lbCurrentCar._rebuildStrip) lbCurrentCar._rebuildStrip();
+          if(lbPhotos.length === 0){ closeLightbox(); return; }
+          lbIndex = Math.min(lbIndex, lbPhotos.length-1);
+          renderLightbox();
+        });
+      })(i);
+      wrap.appendChild(delX);
+      nav.appendChild(wrap);
+    });
+    var multi = lbPhotos.length > 1;
+    document.getElementById('lbPrev').style.display = multi ? '' : 'none';
+    document.getElementById('lbNext').style.display = multi ? '' : 'none';
+    // Show/hide add area
+    var addArea = document.getElementById('lbAddInput').parentElement;
+    addArea.style.display = (lbCurrentCar && lbPhotos.length < 10) ? '' : 'none';
+  }
+
+  document.getElementById('lbClose').addEventListener('click', closeLightbox);
+  document.getElementById('lbOverlay').addEventListener('click', function(e){ if(e.target===this) closeLightbox(); });
+  document.getElementById('lbPrev').addEventListener('click', function(e){
+    e.stopPropagation();
+    lbIndex=(lbIndex-1+lbPhotos.length)%lbPhotos.length; renderLightbox();
+  });
+  document.getElementById('lbNext').addEventListener('click', function(e){
+    e.stopPropagation();
+    lbIndex=(lbIndex+1)%lbPhotos.length; renderLightbox();
+  });
+  document.addEventListener('keydown', function(e){
+    if(!document.getElementById('lbOverlay').classList.contains('open')) return;
+    if(e.key==='Escape') closeLightbox();
+    if(e.key==='ArrowLeft')  { lbIndex=(lbIndex-1+lbPhotos.length)%lbPhotos.length; renderLightbox(); }
+    if(e.key==='ArrowRight') { lbIndex=(lbIndex+1)%lbPhotos.length; renderLightbox(); }
+  });
+
+  // Add photo from lightbox
+  document.getElementById('lbAddSubmit').addEventListener('click', function(){
+    var url = document.getElementById('lbAddInput').value.trim();
+    if(!url || !url.startsWith('http') || !lbCurrentCar) return;
+    if(!lbCurrentCar.photos) lbCurrentCar.photos=[];
+    lbCurrentCar.photos.push(url);
+    saveCars();
+    document.getElementById('lbAddInput').value='';
+    lbPhotos = lbCurrentCar.photos.filter(Boolean);
+    lbIndex = lbPhotos.length - 1;
+    renderLightbox();
+    if(lbCurrentCar._rebuildStrip) lbCurrentCar._rebuildStrip();
+  });
+  document.getElementById('lbAddInput').addEventListener('keydown', function(e){
+    if(e.key==='Enter'){ e.stopPropagation(); document.getElementById('lbAddSubmit').click(); }
+  });
+
+})();
+</script>
+</body>
+</html>
