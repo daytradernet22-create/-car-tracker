@@ -5,17 +5,7 @@ const cors    = require('cors');
 const fs      = require('fs');
 
 const app = express();
-app.use(cors({
-  origin: [
-    /\.netlify\.app$/,
-    /\.netlify\.com$/,
-    'http://localhost:3001',
-    'http://localhost:3000',
-    'http://127.0.0.1:5500',
-    process.env.ALLOWED_ORIGIN || ''
-  ].filter(Boolean),
-  credentials: true
-}));
+app.use(cors());  // allow all origins for now
 app.use(express.json());
 
 // ─── API KEYS (set as environment variables on Railway) ──────────
