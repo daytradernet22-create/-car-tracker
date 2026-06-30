@@ -788,8 +788,10 @@ app.get('/cars', (req, res) => {
 // POST /cars — save all cars (full replace)
 app.post('/cars', (req, res) => {
   const { cars } = req.body;
+  console.log('POST /cars received, count:', cars ? cars.length : 'undefined');
   if (!Array.isArray(cars)) return res.status(400).json({ error: 'cars must be array' });
   const ok = saveCarsToFile(cars);
+  console.log('Save result:', ok, 'to', CARS_FILE);
   res.json({ ok, count: cars.length });
 });
 
