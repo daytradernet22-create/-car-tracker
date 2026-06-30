@@ -1150,7 +1150,8 @@
     openNext();
   });
   // ── ADVANCED SEARCH ────────────────────────────────────────────────
-  var SERVER_URL = SERVER; // uses the same URL as above
+  var SERVER = 'https://car-tracker-production-4d6c.up.railway.app';
+  var SERVER_URL = SERVER;
   var advToggle  = document.getElementById('advToggle');
   var advPanel   = document.getElementById('advPanel');
   var advSearchBtn = document.getElementById('advSearchBtn');
@@ -1293,10 +1294,12 @@
   var lbCurrentCar = null; // car whose photos are open in lightbox
 
   function loadCars(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }catch(e){ return []; } }
-  function saveCars(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(cars)); }
+  function saveCars(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cars));
+    fetch(SERVER + '/cars', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cars:cars})}).catch(function(){});
+  }
   function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
-  var SERVER = 'https://YOUR-APP.railway.app'; // ← replace with your Railway URL
   var GEMINI_KEY = ''; // set via prompt on first use
 
   // ── Custom Modal ─────────────────────────────────────────────────
@@ -1778,6 +1781,15 @@
   function esc(s){ var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
 
   renderTable();
+
+  // Load cars from server on init (server is source of truth)
+  fetch(SERVER + '/cars').then(function(r){ return r.json(); }).then(function(d){
+    if(d.ok && Array.isArray(d.cars) && d.cars.length > 0){
+      cars = d.cars;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cars));
+      renderTable();
+    }
+  }).catch(function(){});
 
   // ── LIGHTBOX ──────────────────────────────────────────────────────
   var lbPhotos      = [];
