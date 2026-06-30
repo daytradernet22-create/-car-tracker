@@ -394,9 +394,11 @@ app.get('/rate', async (req, res) => {
     }
 
     if (!rate || rate < 50 || rate > 200) {
-      // Save debug file to inspect
-      fs.writeFileSync('debug-rate.html', html);
-      return res.status(500).json({ error: 'Rate not found. Check debug-rate.html', htmlLength: html.length });
+      console.log('Rate not found in HTML. HTML length:', html.length);
+      console.log('HTML sample:', html.slice(0, 500));
+      // Return last cached rate or fallback
+      if (cachedRate) return res.json({ rate: cachedRate, source: 'myfin.by/StatusBank (cached-old)', cached: true });
+      return res.status(500).json({ error: 'Rate not found', htmlLength: html.length, sample: html.slice(0,300) });
     }
 
     cachedRate = rate;
@@ -753,6 +755,75 @@ async function callGemini(prompt, imageData) {
   }
   throw lastErr;
 }
+
+// ─── CAR LIST STORAGE ────────────────────────────────────────────
+// Uses Railway persistent volume if mounted, falls back to local file
+const CARS_FILE = process.env.CARS_FILE || (process.env.RAILWAY_VOLUME_MOUNT_PATH
+  ? process.env.RAILWAY_VOLUME_MOUNT_PATH + '/cars-data.json'
+  : './cars-data.json');
+console.log('Cars storage path:', CARS_FILE);
+
+function loadCarsFromFile() {
+  try {
+    if (fs.existsSync(CARS_FILE)) {
+      return JSON.parse(fs.readFileSync(CARS_FILE, 'utf8'));
+    }
+  } catch(e) { console.error('Load cars error:', e.message); }
+  return [];
+}
+
+function saveCarsToFile(cars) {
+  try {
+    fs.writeFileSync(CARS_FILE, JSON.stringify(cars, null, 2));
+    return true;
+  } catch(e) { console.error('Save cars error:', e.message); return false; }
+}
+
+// GET /cars — load all cars
+app.get('/cars', (req, res) => {
+  const cars = loadCarsFromFile();
+  res.json({ ok: true, cars });
+});
+
+// POST /cars — save all cars (full replace)
+app.post('/cars', (req, res) => {
+  const { cars } = req.body;
+  if (!Array.isArray(cars)) return res.status(400).json({ error: 'cars must be array' });
+  const ok = saveCarsToFile(cars);
+  res.json({ ok, count: cars.length });
+});
+
+// POST /cars/add — add single car
+app.post('/cars/add', (req, res) => {
+  const car = req.body;
+  if (!car || !car.id) return res.status(400).json({ error: 'invalid car' });
+  const cars = loadCarsFromFile();
+  // Replace if exists, else add
+  const idx = cars.findIndex(c => c.id === car.id);
+  if (idx >= 0) cars[idx] = car;
+  else cars.unshift(car);
+  saveCarsToFile(cars);
+  res.json({ ok: true, count: cars.length });
+});
+
+// PUT /cars/:id — update single car field
+app.put('/cars/:id', (req, res) => {
+  const cars = loadCarsFromFile();
+  const idx = cars.findIndex(c => c.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: 'car not found' });
+  cars[idx] = { ...cars[idx], ...req.body };
+  saveCarsToFile(cars);
+  res.json({ ok: true, car: cars[idx] });
+});
+
+// DELETE /cars/:id — delete single car
+app.delete('/cars/:id', (req, res) => {
+  let cars = loadCarsFromFile();
+  const before = cars.length;
+  cars = cars.filter(c => c.id !== req.params.id);
+  saveCarsToFile(cars);
+  res.json({ ok: true, deleted: before - cars.length });
+});
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log('Car Tracker running on port', PORT));
